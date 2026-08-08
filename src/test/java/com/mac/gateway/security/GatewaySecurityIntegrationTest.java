@@ -1,0 +1,82 @@
+package com.mac.gateway.security;
+
+import static org.mockito.Mockito.when;
+
+import java.time.Instant;
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
+import org.springframework.context.ApplicationContext;
+import org.springframework.security.oauth2.jwt.BadJwtException;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Mono;
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK, properties = {
+        "spring.profiles.active=production",
+        "gateway.security.enabled=true",
+        "gateway.security.issuer-uri=https://issuer.example",
+        "gateway.security.audience=api-gateway",
+        "management.server.port=0"
+})
+class GatewaySecurityIntegrationTest {
+
+    @Autowired
+    private ApplicationContext context;
+
+    @MockitoBean
+    private ReactiveJwtDecoder jwtDecoder;
+
+    @MockitoBean
+    private RedisRateLimiter rateLimiter;
+
+    private WebTestClient client;
+
+    @BeforeEach
+    void setUp() {
+        client = WebTestClient.bindToApplicationContext(context).build();
+    }
+
+    @Test
+    void rejectsMissingAndInvalidTokenWithJsonResponse() {
+        client.get().uri("/api/v1/audit-logs")
+                .exchange()
+                .expectStatus().isUnauthorized()
+                .expectBody()
+                .jsonPath("$.code").isEqualTo("GATEWAY_UNAUTHORIZED")
+                .jsonPath("$.traceId").isNotEmpty();
+
+        when(jwtDecoder.decode("bad-token")).thenReturn(Mono.error(new BadJwtException("invalid")));
+        client.get().uri("/api/v1/audit-logs")
+                .headers(headers -> headers.setBearerAuth("bad-token"))
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
+    @Test
+    void deniesTokenWithoutRequiredRouteScope() {
+        Instant now = Instant.now();
+        Jwt jwt = Jwt.withTokenValue("wrong-scope")
+                .header("alg", "RS256")
+                .subject("user-1")
+                .issuer("https://issuer.example")
+                .audience(List.of("api-gateway"))
+                .issuedAt(now)
+                .expiresAt(now.plusSeconds(60))
+                .claim("scope", "alert.write")
+                .build();
+        when(jwtDecoder.decode("wrong-scope")).thenReturn(Mono.just(jwt));
+
+        client.get().uri("/api/v1/audit-logs")
+                .headers(headers -> headers.setBearerAuth("wrong-scope"))
+                .exchange()
+                .expectStatus().isForbidden()
+                .expectBody()
+                .jsonPath("$.code").isEqualTo("GATEWAY_FORBIDDEN");
+    }
+}

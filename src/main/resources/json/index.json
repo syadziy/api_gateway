@@ -1,0 +1,8 @@
+{
+  "service": "api-gateway",
+  "examples": [
+    "routes.json",
+    "security.json",
+    "error-responses.json"
+  ]
+}

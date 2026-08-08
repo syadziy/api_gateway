@@ -1,0 +1,22 @@
+{
+  "jwtValidation": {
+    "signature": "Validated using issuer JWKS",
+    "issuer": "JWT_ISSUER_URI",
+    "audience": "JWT_AUDIENCE",
+    "timeClaims": ["exp", "nbf"]
+  },
+  "scopeMapping": {
+    "POST /api/v1/alert/**": "alert.write",
+    "GET /api/v1/audit-logs/**": "audit.read",
+    "GET /api/v1/histories/**": "scheduler.read",
+    "/api/v1/tasks/**": "scheduler.manage",
+    "/api/v1/task-groups/**": "scheduler.manage",
+    "/api/v1/schedules/**": "scheduler.manage"
+  },
+  "sampleClaims": {
+    "sub": "user-123",
+    "iss": "https://identity.example.com/realms/platform",
+    "aud": ["api-gateway"],
+    "scope": "audit.read scheduler.read"
+  }
+}

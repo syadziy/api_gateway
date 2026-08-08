@@ -1,0 +1,36 @@
+{
+  "contentType": "application/json",
+  "examples": [
+    {
+      "status": 404,
+      "body": {
+        "code": "GATEWAY_404",
+        "message": "Route was not found",
+        "traceId": "request-trace-001",
+        "timestamp": "2026-08-09T00:00:00Z"
+      }
+    },
+    {
+      "status": 429,
+      "description": "Redis token bucket rejected the route/client key"
+    },
+    {
+      "status": 503,
+      "body": {
+        "code": "GATEWAY_UNAVAILABLE",
+        "message": "Service is temporarily unavailable",
+        "traceId": "request-trace-001",
+        "timestamp": "2026-08-09T00:00:00Z"
+      }
+    },
+    {
+      "status": 504,
+      "body": {
+        "code": "GATEWAY_TIMEOUT",
+        "message": "Upstream service timed out",
+        "traceId": "request-trace-001",
+        "timestamp": "2026-08-09T00:00:00Z"
+      }
+    }
+  ]
+}

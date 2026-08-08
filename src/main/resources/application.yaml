@@ -1,0 +1,135 @@
+spring:
+  application:
+    name: api-gateway
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  lifecycle:
+    timeout-per-shutdown-phase: ${SHUTDOWN_TIMEOUT:30s}
+  codec:
+    max-in-memory-size: ${MAX_IN_MEMORY_SIZE:1MB}
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: ${REDIS_TIMEOUT:1s}
+      connect-timeout: ${REDIS_CONNECT_TIMEOUT:1s}
+  cloud:
+    gateway:
+      server:
+        webflux:
+          trusted-proxies: ${TRUSTED_PROXY_PATTERN:^10\..*|^192\.168\..*|^172\.(1[6-9]|2[0-9]|3[01])\..*}
+          x-forwarded:
+            enabled: true
+            for-append: false
+            host-append: false
+            port-append: false
+            proto-append: false
+            prefix-append: false
+          httpclient:
+            connect-timeout: ${UPSTREAM_CONNECT_TIMEOUT_MS:2000}
+            response-timeout: ${UPSTREAM_RESPONSE_TIMEOUT:10s}
+            compression: true
+            pool:
+              type: fixed
+              max-connections: ${UPSTREAM_MAX_CONNECTIONS:500}
+              acquire-timeout: ${UPSTREAM_ACQUIRE_TIMEOUT_MS:2000}
+              max-idle-time: ${UPSTREAM_MAX_IDLE_TIME:30s}
+              max-life-time: ${UPSTREAM_MAX_LIFE_TIME:5m}
+              eviction-interval: ${UPSTREAM_EVICTION_INTERVAL:30s}
+              metrics: true
+          metrics:
+            enabled: true
+            path-tags:
+              enabled: false
+          redis-rate-limiter:
+            include-headers: true
+server:
+  port: ${SERVER_PORT:9000}
+  shutdown: graceful
+  max-http-request-header-size: ${MAX_REQUEST_HEADER_SIZE:16KB}
+  forward-headers-strategy: none
+
+gateway:
+  http:
+    correlation-header: ${CORRELATION_HEADER:X-Correlation-Id}
+    client-id-header: ${CLIENT_ID_HEADER:X-Client-Id}
+    correlation-id-max-length: ${CORRELATION_ID_MAX_LENGTH:64}
+    max-request-size: ${MAX_REQUEST_SIZE:5MB}
+    connect-timeout: ${UPSTREAM_CONNECT_TIMEOUT:2s}
+    response-timeout: ${UPSTREAM_RESPONSE_TIMEOUT:10s}
+  security:
+    enabled: ${GATEWAY_SECURITY_ENABLED:true}
+    issuer-uri: ${JWT_ISSUER_URI:https://identity.example.com/realms/platform}
+    audience: ${JWT_AUDIENCE:api-gateway}
+    allowed-origins: ${GATEWAY_ALLOWED_ORIGINS:https://app.example.com}
+    allow-credentials: ${GATEWAY_CORS_ALLOW_CREDENTIALS:true}
+  rate-limit:
+    replenish-rate: ${RATE_LIMIT_REPLENISH_RATE:20}
+    burst-capacity: ${RATE_LIMIT_BURST_CAPACITY:40}
+    requested-tokens: ${RATE_LIMIT_REQUESTED_TOKENS:1}
+  routes:
+    alert: ${ALERT_SERVICE_URI:http://centralized-alert:9001}
+    scheduler: ${SCHEDULER_SERVICE_URI:http://scheduler:9002}
+    audit: ${AUDIT_SERVICE_URI:http://audit-log:9003}
+  canary:
+    enabled: ${ALERT_CANARY_ENABLED:false}
+    alert: ${ALERT_CANARY_SERVICE_URI:http://centralized-alert-canary:9001}
+    weight: ${ALERT_CANARY_WEIGHT:5}
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 100
+        minimum-number-of-calls: 20
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 70
+        slow-call-duration-threshold: 5s
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 5
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: ${UPSTREAM_RESPONSE_TIMEOUT:10s}
+        cancel-running-future: true
+  bulkhead:
+    instances:
+      centralized-alert:
+        max-concurrent-calls: ${ALERT_MAX_CONCURRENT_CALLS:200}
+        max-wait-duration: 0
+      scheduler:
+        max-concurrent-calls: ${SCHEDULER_MAX_CONCURRENT_CALLS:100}
+        max-wait-duration: 0
+      audit-log:
+        max-concurrent-calls: ${AUDIT_MAX_CONCURRENT_CALLS:200}
+        max-wait-duration: 0
+
+management:
+  server:
+    port: ${MANAGEMENT_PORT:9090}
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState
+        liveness:
+          include: livenessState
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:0.1}
+
+logging:
+  structured:
+    format:
+      console: ecs

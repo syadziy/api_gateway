@@ -1,0 +1,227 @@
+# API Gateway Context
+
+Saya ingin membuat service API Gateway menggunakan Java 21.
+
+Gateway menjadi satu-satunya public entry point menuju internal services. Gateway bertanggung
+jawab atas routing dan cross-cutting concerns, tetapi tidak boleh menjadi tempat business logic,
+database orchestration, atau transformasi payload yang kompleks.
+
+## Stack dan prinsip dasar
+
+- Java 21.
+- Spring Boot dan Spring Cloud Gateway versi yang kompatibel satu sama lain.
+- Gunakan Spring Cloud Gateway berbasis WebFlux/reactive dan Netty.
+- Jangan menambahkan `spring-boot-starter-web` atau melakukan blocking I/O pada event-loop.
+- Gunakan constructor injection dan type-safe `@ConfigurationProperties`.
+- Gateway harus stateless sehingga instance dapat ditambah atau dihentikan tanpa memindahkan
+  session lokal.
+- Konfigurasi route harus dapat berasal dari YAML untuk baseline dan dapat dikembangkan menuju
+  dynamic configuration/service discovery tanpa mengubah business route code.
+- Semua client-facing message harus menggunakan bahasa Inggris.
+
+`sdk_util` yang digunakan service lain saat ini harus diperiksa kompatibilitasnya dengan WebFlux.
+Komponen Servlet seperti `OncePerRequestFilter`, MVC `HandlerInterceptor`, atau MVC-only exception
+handler tidak boleh dipasang langsung pada reactive gateway. Buat adapter WebFlux atau modul SDK
+reactive untuk response error, correlation ID, security, dan structured logging bila diperlukan.
+
+## Struktur package yang diharapkan
+
+```text
+src/main/java/com/mac/gateway/
+├── config/                 # Route, security, CORS, HTTP client, resilience, Redis
+│   └── properties/         # Type-safe gateway configuration
+├── filter/                 # Global and route-specific GatewayFilter
+├── security/               # JWT conversion, authorization, trusted proxy policy
+├── service/                # Small gateway orchestration such as route metadata lookup
+│   └── impl/
+├── utils/
+│   ├── constant/           # Header names, error codes, structured-log fields
+│   ├── exception/          # Gateway-specific exceptions
+│   └── handler/            # Reactive error response handling
+└── ApiGatewayApplication.java
+
+src/main/resources/
+├── json/                   # Request/error and route examples
+├── application.yaml
+└── application-local.yaml
+
+src/test/java/com/mac/gateway/
+```
+
+## Routing requirements
+
+- Route berdasarkan path, HTTP method, host, dan header bila dibutuhkan.
+- Route ID harus unik, stabil, dan mudah dicari pada log/metrics.
+- Mendukung rewrite/strip prefix secara eksplisit per route.
+- Menolak route yang tidak dikenal dengan response JSON `404`, bukan default HTML error page.
+- Menetapkan batas ukuran request, header, dan multipart upload untuk mencegah memory exhaustion.
+- Meneruskan query parameter dan status downstream secara benar.
+- Jangan meneruskan hop-by-hop headers.
+- Hapus atau timpa internal/trusted headers yang dikirim langsung oleh public client.
+- Sediakan mekanisme route versioning, misalnya `/api/v1/**`, tanpa rewrite yang ambigu.
+- Perubahan route harus dapat divalidasi sebelum deployment dan memiliki rollback yang jelas.
+
+## Load balancing requirements
+
+- Setiap logical service dapat memiliki lebih dari satu healthy instance.
+- Pilih dan dokumentasikan tepat satu sumber instance:
+  - Kubernetes-native: gateway merutekan ke Kubernetes Service/VIP dan load balancing dilakukan
+    platform; atau
+  - Client-side discovery: gateway memakai service registry dan Spring Cloud LoadBalancer untuk
+    memilih instance secara langsung.
+- Hindari client-side load balancer di depan platform load balancer tanpa alasan yang terukur,
+  karena menghasilkan double load balancing dan menyulitkan observability.
+- Default algorithm dapat menggunakan round-robin. Weighted routing harus tersedia untuk canary,
+  blue-green deployment, atau traffic shifting.
+- Hanya instance healthy/ready yang boleh menerima traffic baru.
+- Connection pooling, keep-alive, connect timeout, response timeout, idle timeout, dan maximum
+  connection count harus configurable per route/service.
+- Failure satu instance tidak boleh membuat seluruh route tidak tersedia bila instance sehat lain
+  masih ada.
+- Sticky session tidak digunakan secara default. Jika legacy service membutuhkannya, alasan,
+  affinity key, expiry, dan failure behavior harus terdokumentasi.
+- Log dan metrics harus dapat menunjukkan target service/instance yang dipilih tanpa membocorkan
+  internal credential.
+
+## Scalability dan high availability
+
+- Gateway tidak menyimpan mutable state di memory yang diperlukan request berikutnya.
+- Jalankan minimal dua replica pada production dan distribusikan ke node/availability zone yang
+  berbeda bila platform mendukungnya.
+- Sediakan readiness, liveness, dan startup probe yang berbeda.
+- Readiness harus gagal bila instance gateway belum siap menerima request, tetapi dependency
+  downstream yang sedang gagal tidak selalu membuat seluruh gateway dianggap mati.
+- Mendukung graceful shutdown dan connection draining agar in-flight requests diberi waktu selesai.
+- Tetapkan CPU/memory request dan limit berdasarkan hasil load test, bukan perkiraan semata.
+- Autoscaling menggunakan CPU, memory, active connections, request rate, dan/atau latency sesuai
+  kemampuan platform. Hindari hanya mengandalkan CPU untuk beban network-bound.
+- Tidak boleh menggunakan local in-memory rate limit pada multi-replica production. Gunakan Redis
+  atau distributed rate-limit backend agar quota konsisten antar-instance.
+- Redis untuk rate limiting harus memiliki timeout singkat, connection pool, authentication/TLS,
+  high availability, key TTL, dan kebijakan yang jelas ketika Redis gagal (fail-open atau
+  fail-closed per route).
+- Lakukan capacity planning untuk throughput, concurrent connections, response size, dan peak
+  traffic. Sisakan headroom dan uji scale-out/scale-in.
+
+## Resilience
+
+- Konfigurasikan connect timeout dan response timeout untuk seluruh route; route khusus boleh
+  override dengan batas yang terdokumentasi.
+- Gunakan circuit breaker per downstream service agar kegagalan tidak menyebar.
+- Batasi pending request/connection queue untuk mencegah resource exhaustion.
+- Retry hanya untuk failure transient dan method idempotent (`GET`, `HEAD`, atau request dengan
+  idempotency contract yang jelas).
+- Jangan retry `POST`, upload, atau request non-idempotent secara default.
+- Retry harus memiliki maximum attempts, backoff, jitter, dan menghormati total request deadline.
+- Jangan mengombinasikan retry pada gateway dan downstream tanpa retry budget untuk menghindari
+  retry storm.
+- Sediakan fallback hanya bila response fallback benar secara bisnis; jangan mengubah error asli
+  menjadi response sukses palsu.
+- Gunakan bulkhead/concurrency limit per route agar satu downstream lambat tidak menghabiskan semua
+  connection dan memory gateway.
+- Tetapkan response standar untuk timeout (`504`), unavailable/open circuit (`503`), rate limit
+  (`429`), unauthenticated (`401`), forbidden (`403`), dan invalid request (`400`).
+
+## Security
+
+- TLS wajib pada public endpoint. Gunakan mTLS ke downstream bila threat model membutuhkannya.
+- Validasi OAuth2/OIDC JWT: signature, issuer, audience, expiry, not-before, dan algorithm allowlist.
+- Authorization berbasis route, HTTP method, scope/role; default policy adalah deny.
+- Jangan hanya decode JWT tanpa verifikasi cryptographic signature.
+- Sanitasi incoming forwarding headers. Percaya `Forwarded`/`X-Forwarded-*` hanya dari proxy CIDR
+  yang dikonfigurasi.
+- Gateway membuat atau menerima `X-Correlation-Id` dengan validasi panjang/karakter, kemudian
+  meneruskannya sebagai trace context.
+- Terapkan CORS allowlist; jangan memakai wildcard origin bersama credentials.
+- Terapkan rate limiting berdasarkan client/application/user dan route. Jangan mengandalkan IP
+  saja bila gateway berada di belakang proxy atau NAT.
+- Dukung request-body size limit, header size limit, method allowlist, dan optional IP allowlist.
+- Jangan log access token, cookie, API key, authorization header, password, atau request/response
+  body sensitif.
+- Secrets harus berasal dari secret manager/environment injection, bukan repository atau YAML.
+- Actuator, route inspection, refresh, dan administrative endpoints tidak boleh public.
+- Dependency dan container image harus dipindai; patch keamanan harus memiliki proses rutin.
+
+## Observability
+
+- Gunakan ECS-compatible structured JSON logging.
+- Setiap request memiliki `trace.id`/correlation ID dan, bila tracing aktif, `span.id`.
+- Propagasi W3C `traceparent`/`tracestate` ke downstream dan jangan membuat trace baru bila context
+  valid sudah tersedia.
+- Access log minimal memuat route ID, method, normalized path template, status, duration, request
+  size, response size, upstream service, retry count, dan outcome.
+- Jangan menggunakan raw URL/path sebagai metric tag bila mengandung ID karena menyebabkan high
+  cardinality. Gunakan route ID atau normalized path template.
+- Expose Actuator health dan Prometheus metrics melalui management port/network yang terlindungi.
+- Metrics minimal: request rate, error rate, latency percentiles, active connections, pending
+  requests, timeout, circuit-breaker state, retry count, rate-limit rejection, dan response class.
+- Sediakan distributed tracing dengan OpenTelemetry/Micrometer Tracing dan sampling configurable.
+- Alert harus tersedia untuk lonjakan 5xx/429, latency SLO breach, instance unhealthy, connection
+  pool saturation, dan Redis rate-limiter failure.
+
+## Configuration dan deployment
+
+- Pisahkan konfigurasi route, timeout, retry, circuit breaker, rate limit, CORS, dan security.
+- Semua nilai environment-specific menggunakan environment variable atau configuration provider.
+- Validasi configuration properties saat startup dan fail fast untuk nilai invalid.
+- Container berjalan sebagai non-root, read-only filesystem bila memungkinkan, memiliki resource
+  limits, dan image dibuat minimal.
+- Gunakan rolling update dengan `maxUnavailable` yang menjaga kapasitas minimum.
+- Gunakan PodDisruptionBudget dan anti-affinity/topology spread pada Kubernetes production.
+- Gateway harus dapat dihentikan dan dimulai ulang tanpa kehilangan state bisnis.
+- Dynamic route refresh harus authenticated, audited, atomic, dan tetap menggunakan last-known-good
+  configuration bila pembaruan invalid.
+
+## Performance testing
+
+- Lakukan load test dengan payload dan pola traffic realistis, termasuk downstream cepat, lambat,
+  timeout, connection reset, dan partial instance failure.
+- Ukur throughput, p50/p95/p99 latency, error rate, connection usage, event-loop saturation, CPU,
+  memory, dan garbage collection.
+- Uji horizontal scaling dari satu ke beberapa replica dan pastikan distribusi traffic sesuai
+  algorithm yang dipilih.
+- Uji rate limit lintas replica, circuit breaker, retry budget, graceful shutdown, dan failover.
+- Hindari blocking call. Tambahkan BlockHound atau pemeriksaan sejenis pada test bila sesuai dengan
+  versi framework yang digunakan.
+
+## Testing dan quality gate
+
+- Unit-test custom predicate/filter, header sanitization, authorization mapping, rate-limit key,
+  error mapping, dan configuration validation.
+- Integration-test routing, rewrite, load balancing, timeout, retry, circuit breaker, Redis rate
+  limiter, JWT validation, CORS, trace propagation, dan actuator isolation.
+- Test harus mencakup success dan failure path, termasuk downstream tidak sehat dan Redis gagal.
+- Gunakan WireMock/MockWebServer untuk downstream dan Testcontainers untuk Redis serta dependency
+  lain pada CI yang memiliki Docker.
+- Line coverage production business code minimal 90% dan diverifikasi menggunakan JaCoCo.
+- Jangan mengejar coverage dengan assertion tanpa makna atau mengecualikan custom gateway logic.
+
+## Acceptance criteria
+
+Implementasi dianggap siap ketika:
+
+1. Route yang dikonfigurasi meneruskan request ke service yang benar dan unknown route menghasilkan
+   JSON `404`.
+2. Traffic terdistribusi ke beberapa healthy instance sesuai strategi yang terdokumentasi.
+3. Scale-out dan scale-in tidak membutuhkan perubahan konfigurasi client atau kehilangan session.
+4. Timeout, circuit breaker, retry idempotent, bulkhead, dan rate limit terbukti melalui test.
+5. Redis rate limit konsisten pada beberapa replica dan failure policy Redis telah diuji.
+6. JWT invalid/expired/wrong issuer/wrong audience ditolak; route tanpa izin menghasilkan `403`.
+7. Trace context diteruskan end-to-end dan log/metric tidak memiliki credential atau high-cardinality
+   tag yang tidak terkontrol.
+8. Graceful shutdown tidak langsung memutus seluruh in-flight request.
+9. Load test memenuhi SLO yang disepakati. Target throughput/latency harus ditentukan berdasarkan
+   kebutuhan bisnis sebelum production sign-off.
+10. `mvn clean verify` berhasil dan JaCoCo line coverage untuk custom production logic minimal 90%.
+
+## Hal yang harus ditentukan sebelum implementasi
+
+- Platform deployment: Kubernetes, VM, atau lainnya.
+- Sumber service discovery dan siapa yang melakukan load balancing.
+- Daftar route, downstream service, path rewrite, dan ownership masing-masing route.
+- Target throughput, concurrent connections, payload maksimum, timeout, serta latency/error SLO.
+- OAuth2/OIDC issuer, audience, scope/role mapping, public routes, dan trusted proxy CIDR.
+- Rate-limit quota/key dan fail-open/fail-closed policy per route.
+- Apakah dynamic route configuration diperlukan pada versi pertama.
+- Redis topology serta failure policy.
+- Management endpoint network/port dan monitoring stack.
