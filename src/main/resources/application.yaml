@@ -71,6 +71,7 @@ gateway:
     requested-tokens: ${RATE_LIMIT_REQUESTED_TOKENS:1}
   routes:
     alert: ${ALERT_SERVICE_URI:http://centralized-alert:9001}
+    alert-web-socket: ${ALERT_WEBSOCKET_URI:ws://centralized-alert:9001}
     scheduler: ${SCHEDULER_SERVICE_URI:http://scheduler:9002}
     audit: ${AUDIT_SERVICE_URI:http://audit-log:9003}
     usermanagement: ${USERMANAGEMENT_SERVICE_URI:http://usermanagement:9005}

@@ -57,7 +57,10 @@ public class RouteConfig {
                             .metadata("response-timeout", responseTimeoutMillis))
                     .uri(properties.routes().alert()));
         }
-        return routes.route("scheduler", route -> route
+        return routes.route("centralized-alert-websocket", route -> route
+                        .path("/ws/alerts")
+                        .uri(properties.routes().alertWebSocket()))
+                .route("scheduler", route -> route
                         .path("/api/v1/tasks/**", "/api/v1/task-groups/**", "/api/v1/schedules/**",
                                 "/api/v1/histories/**")
                         .filters(filters -> common(filters, "scheduler", properties, rateLimiter, keyResolver)

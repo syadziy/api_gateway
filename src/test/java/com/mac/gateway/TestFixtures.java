@@ -21,6 +21,7 @@ public final class TestFixtures {
                 new GatewayProperties.RateLimit(20, 40, 1),
                 new GatewayProperties.Routes(
                         URI.create("http://alert:9001"),
+                        URI.create("ws://alert:9001"),
                         URI.create("http://scheduler:9002"),
                         URI.create("http://audit:9003"),
                         URI.create("http://usermanagement:9005")),

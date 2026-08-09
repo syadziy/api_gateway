@@ -18,6 +18,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
         "gateway.canary.alert=http://alert-canary.test:9001",
         "gateway.canary.weight=5",
         "gateway.routes.alert=http://alert.test:9001",
+        "gateway.routes.alert-web-socket=ws://alert.test:9001",
         "gateway.routes.scheduler=http://scheduler.test:9002",
         "gateway.routes.audit=http://audit.test:9003",
         "gateway.routes.usermanagement=http://usermanagement.test:9005"
@@ -38,6 +39,7 @@ class GatewayContextIntegrationTest {
         assertThat(routes).containsExactlyInAnyOrderEntriesOf(Map.of(
                 "centralized-alert-stable", "http://alert.test:9001",
                 "centralized-alert-canary", "http://alert-canary.test:9001",
+                "centralized-alert-websocket", "ws://alert.test:9001",
                 "scheduler", "http://scheduler.test:9002",
                 "audit-log", "http://audit.test:9003",
                 "usermanagement", "http://usermanagement.test:9005"));

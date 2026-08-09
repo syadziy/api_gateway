@@ -37,6 +37,7 @@ public class SecurityConfig {
         return common(http)
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .pathMatchers("/ws/alerts").permitAll()
                         .pathMatchers("/internal/**").permitAll()
                         .pathMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
                         .pathMatchers(HttpMethod.POST, "/api/v1/tenants").permitAll()

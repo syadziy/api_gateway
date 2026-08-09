@@ -53,6 +53,7 @@ public record GatewayProperties(
 
     public record Routes(
             @DefaultValue("http://centralized-alert:9001") @NotNull URI alert,
+            @DefaultValue("ws://centralized-alert:9001") @NotNull URI alertWebSocket,
             @DefaultValue("http://scheduler:9002") @NotNull URI scheduler,
             @DefaultValue("http://audit-log:9003") @NotNull URI audit,
             @DefaultValue("http://usermanagement:9005") @NotNull URI usermanagement) {}

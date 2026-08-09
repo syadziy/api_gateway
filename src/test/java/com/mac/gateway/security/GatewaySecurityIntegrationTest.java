@@ -134,6 +134,13 @@ class GatewaySecurityIntegrationTest {
                 .expectStatus().value(GatewaySecurityIntegrationTest::assertAuthorized);
     }
 
+    @Test
+    void websocketHandshakeIsPublicBecauseStompConnectValidatesJwtDownstream() {
+        client.get().uri("/ws/alerts")
+                .exchange()
+                .expectStatus().value(GatewaySecurityIntegrationTest::assertAuthorized);
+    }
+
     private static Jwt jwt(String token, Instant now, String scope) {
         return Jwt.withTokenValue(token)
                 .header("alg", "RS256")
