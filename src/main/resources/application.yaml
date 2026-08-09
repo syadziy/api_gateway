@@ -61,7 +61,7 @@ gateway:
     response-timeout: ${UPSTREAM_RESPONSE_TIMEOUT:10s}
   security:
     enabled: ${GATEWAY_SECURITY_ENABLED:true}
-    issuer-uri: ${JWT_ISSUER_URI:http://localhost:8081/realms/boilerplate}
+    issuer-uri: ${JWT_ISSUER_URI:http://localhost:9005}
     audience: ${JWT_AUDIENCE:api-gateway}
     allowed-origins: ${GATEWAY_ALLOWED_ORIGINS:http://localhost:3000}
     allow-credentials: ${GATEWAY_CORS_ALLOW_CREDENTIALS:true}

@@ -35,7 +35,7 @@ public record GatewayProperties(
 
     public record Security(
             @DefaultValue("true") boolean enabled,
-            @DefaultValue("https://identity.example.com/realms/platform") @NotBlank String issuerUri,
+            @DefaultValue("http://localhost:9005") @NotBlank String issuerUri,
             @DefaultValue("api-gateway") @NotBlank String audience,
             @DefaultValue("https://app.example.com") List<String> allowedOrigins,
             @DefaultValue("true") boolean allowCredentials) {

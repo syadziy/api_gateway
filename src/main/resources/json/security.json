@@ -15,8 +15,11 @@
   },
   "sampleClaims": {
     "sub": "user-123",
-    "iss": "https://identity.example.com/realms/platform",
+    "iss": "http://localhost:9005",
     "aud": ["api-gateway"],
-    "scope": "audit.read scheduler.read"
+    "roles": ["AUDIT_OPERATOR"],
+    "permissions": ["audit:read", "scheduler:read"],
+    "scope": "audit.read scheduler.read",
+    "username": "operations.user"
   }
 }

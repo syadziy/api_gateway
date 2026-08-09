@@ -75,6 +75,10 @@ Policy authorization adalah deny-by-default. Incoming forwarding dan authenticat
 headers dibuang, lalu gateway membuat forwarding/identity headers dari connection dan JWT yang
 sudah tervalidasi.
 
+Issuer utama adalah `usermanagement`. Gateway mengambil public RSA key melalui discovery/JWKS,
+memvalidasi audience `api-gateway`, dan memakai claim `scope` yang dibentuk dari permission
+`resource:action` menjadi `SCOPE_resource.action`.
+
 CORS menggunakan exact-origin allowlist. Wildcard origin ditolak saat credentials aktif.
 Management endpoint berjalan pada port terpisah `9090` dan Kubernetes manifest mengeksposnya lewat
 ClusterIP terpisah, bukan public service.
