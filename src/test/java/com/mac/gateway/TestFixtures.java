@@ -22,7 +22,8 @@ public final class TestFixtures {
                 new GatewayProperties.Routes(
                         URI.create("http://alert:9001"),
                         URI.create("http://scheduler:9002"),
-                        URI.create("http://audit:9003")),
+                        URI.create("http://audit:9003"),
+                        URI.create("http://usermanagement:9005")),
                 new GatewayProperties.Canary(false, URI.create("http://alert-canary:9001"), 5));
     }
 }

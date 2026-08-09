@@ -73,6 +73,7 @@ gateway:
     alert: ${ALERT_SERVICE_URI:http://centralized-alert:9001}
     scheduler: ${SCHEDULER_SERVICE_URI:http://scheduler:9002}
     audit: ${AUDIT_SERVICE_URI:http://audit-log:9003}
+    usermanagement: ${USERMANAGEMENT_SERVICE_URI:http://usermanagement:9005}
   canary:
     enabled: ${ALERT_CANARY_ENABLED:false}
     alert: ${ALERT_CANARY_SERVICE_URI:http://centralized-alert-canary:9001}
@@ -105,6 +106,9 @@ resilience4j:
         max-wait-duration: 0
       audit-log:
         max-concurrent-calls: ${AUDIT_MAX_CONCURRENT_CALLS:200}
+        max-wait-duration: 0
+      usermanagement:
+        max-concurrent-calls: ${USERMANAGEMENT_MAX_CONCURRENT_CALLS:100}
         max-wait-duration: 0
 
 management:

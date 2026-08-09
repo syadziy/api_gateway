@@ -37,6 +37,7 @@ spec:
             - { name: ALERT_SERVICE_URI, value: "http://centralized-alert:9001" }
             - { name: SCHEDULER_SERVICE_URI, value: "http://scheduler:9002" }
             - { name: AUDIT_SERVICE_URI, value: "http://audit-log:9003" }
+            - { name: USERMANAGEMENT_SERVICE_URI, value: "http://usermanagement:9005" }
             - { name: REDIS_HOST, value: "redis" }
             - { name: JWT_ISSUER_URI, value: "http://usermanagement:9005" }
             - { name: JWT_AUDIENCE, value: "api-gateway" }

@@ -1,6 +1,6 @@
 # API Gateway
 
-Reactive API Gateway untuk `centralized_alert`, `scheduler`, dan `audit_log`. Gateway menjadi
+Reactive API Gateway untuk `centralized_alert`, `scheduler`, `audit_log`, dan `usermanagement`. Gateway menjadi
 public entry point, sedangkan load balancing default dilakukan oleh Kubernetes Service/VIP agar
 tidak terjadi double load balancing.
 
@@ -27,9 +27,11 @@ sendiri. Maven Enforcer menggagalkan build bila `spring-webmvc`, `spring-boot-st
 | `centralized-alert` | `/api/v1/alert`, `/api/v1/alert/**` | `centralized-alert:9001` | `SCOPE_alert.write`; recipient dashboard memakai `SCOPE_alert.read-recipients`/`SCOPE_alert.manage-recipients` |
 | `scheduler` | tasks, task-groups, schedules, histories | `scheduler:9002` | scheduler read/manage scope |
 | `audit-log` | `/api/v1/audit-logs/**` | `audit-log:9003` | `SCOPE_audit.read` |
+| `usermanagement` | `/api/v1/auth/**`, `/api/v1/tenants/**` | `usermanagement:9005` | login dan registrasi tenant public; operasi tenant memakai scope resource/action |
 
 Path dan query string diteruskan tanpa rewrite. URI upstream berasal dari environment variables
-`ALERT_SERVICE_URI`, `SCHEDULER_SERVICE_URI`, dan `AUDIT_SERVICE_URI`.
+`ALERT_SERVICE_URI`, `SCHEDULER_SERVICE_URI`, `AUDIT_SERVICE_URI`, dan
+`USERMANAGEMENT_SERVICE_URI`.
 
 ## Load balancing dan canary
 
@@ -79,6 +81,12 @@ Issuer utama adalah `usermanagement`. Gateway mengambil public RSA key melalui d
 memvalidasi audience `api-gateway`, dan memakai claim `scope` yang dibentuk dari permission
 `resource:action` menjadi `SCOPE_resource.action`.
 
+`POST /api/v1/auth/login` dan `POST /api/v1/tenants` dapat melewati gateway tanpa bearer token.
+Kebijakan apakah registrasi tenant diizinkan tetap diputuskan oleh property
+`usermanagement.registration.enabled` pada downstream. Endpoint tenant lainnya membutuhkan scope
+yang sama dengan permission method-security usermanagement, misalnya `user:view` menjadi
+`SCOPE_user.view` pada gateway dan `PERM_user:view` pada downstream.
+
 CORS menggunakan exact-origin allowlist. Wildcard origin ditolak saat credentials aktif.
 Management endpoint berjalan pada port terpisah `9090` dan Kubernetes manifest mengeksposnya lewat
 ClusterIP terpisah, bukan public service.
@@ -103,7 +111,7 @@ Endpoint management:
 
 ## Menjalankan lokal
 
-Prasyarat: JDK 21, Redis, serta service downstream pada port 9001-9003.
+Prasyarat: JDK 21, Redis, serta service downstream pada port 9001-9003 dan 9005.
 
 ```bash
 export GATEWAY_SECURITY_ENABLED=false

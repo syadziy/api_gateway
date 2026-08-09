@@ -6,6 +6,17 @@
     "timeClaims": ["exp", "nbf"]
   },
   "scopeMapping": {
+    "POST /api/v1/auth/login": "public",
+    "POST /api/v1/tenants": "public",
+    "PATCH /api/v1/tenants/*/token-policy": "tenant.update",
+    "GET /api/v1/tenants/*/users": "user.view",
+    "POST /api/v1/tenants/*/users": "user.create",
+    "PUT /api/v1/tenants/*/users/*/roles": "role.assign",
+    "GET /api/v1/tenants/*/roles": "role.view",
+    "POST /api/v1/tenants/*/roles": "role.create",
+    "PUT /api/v1/tenants/*/roles/*/permissions": "role.edit",
+    "GET /api/v1/tenants/*/permissions": "permission.view",
+    "POST /api/v1/tenants/*/permissions": "permission.create",
     "POST /api/v1/alert/**": "alert.write",
     "GET /api/v1/alert/recipients/**": "alert.read-recipients",
     "POST|PUT|DELETE /api/v1/alert/recipients/**": "alert.manage-recipients",

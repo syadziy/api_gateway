@@ -1,5 +1,5 @@
 {
-  "baseUrl": "http://localhost:9000",
+  "baseUrl": "http://localhost:9100",
   "routes": [
     {
       "routeId": "centralized-alert",
@@ -27,11 +27,31 @@
       "paths": ["/api/v1/audit-logs", "/api/v1/audit-logs/**"],
       "upstream": "AUDIT_SERVICE_URI",
       "requiredAuthority": "SCOPE_audit.read"
+    },
+    {
+      "routeId": "usermanagement",
+      "paths": ["/api/v1/auth/**", "/api/v1/tenants", "/api/v1/tenants/**"],
+      "upstream": "USERMANAGEMENT_SERVICE_URI",
+      "publicOperations": [
+        "POST /api/v1/auth/login",
+        "POST /api/v1/tenants"
+      ],
+      "protectedAuthorities": [
+        "SCOPE_tenant.update",
+        "SCOPE_user.view",
+        "SCOPE_user.create",
+        "SCOPE_role.assign",
+        "SCOPE_role.view",
+        "SCOPE_role.create",
+        "SCOPE_role.edit",
+        "SCOPE_permission.view",
+        "SCOPE_permission.create"
+      ]
     }
   ],
   "example": {
     "method": "GET",
-    "url": "http://localhost:9000/api/v1/audit-logs?limit=20",
+    "url": "http://localhost:9100/api/v1/audit-logs?limit=20",
     "headers": {
       "Authorization": "Bearer <access-token>",
       "X-Correlation-Id": "audit-query-001",

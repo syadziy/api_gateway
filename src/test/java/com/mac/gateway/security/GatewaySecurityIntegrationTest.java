@@ -102,6 +102,31 @@ class GatewaySecurityIntegrationTest {
                 .expectStatus().value(status -> assertAuthorized(status));
     }
 
+    @Test
+    void exposesPublicIdentityEndpointsAndProtectsTenantOperations() {
+        client.post().uri("/api/v1/auth/login")
+                .exchange()
+                .expectStatus().value(GatewaySecurityIntegrationTest::assertAuthorized);
+        client.post().uri("/api/v1/tenants")
+                .exchange()
+                .expectStatus().value(GatewaySecurityIntegrationTest::assertAuthorized);
+
+        Instant now = Instant.now();
+        when(jwtDecoder.decode("user-view"))
+                .thenReturn(Mono.just(jwt("user-view", now, "user.view")));
+        when(jwtDecoder.decode("user-create"))
+                .thenReturn(Mono.just(jwt("user-create", now, "user.create")));
+
+        client.get().uri("/api/v1/tenants/11111111-1111-1111-1111-111111111111/users")
+                .headers(headers -> headers.setBearerAuth("user-view"))
+                .exchange()
+                .expectStatus().value(GatewaySecurityIntegrationTest::assertAuthorized);
+        client.get().uri("/api/v1/tenants/11111111-1111-1111-1111-111111111111/users")
+                .headers(headers -> headers.setBearerAuth("user-create"))
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+
     private static Jwt jwt(String token, Instant now, String scope) {
         return Jwt.withTokenValue(token)
                 .header("alg", "RS256")

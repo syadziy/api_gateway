@@ -68,6 +68,11 @@ public class RouteConfig {
                         .filters(filters -> common(filters, "audit-log", properties, rateLimiter, keyResolver)
                                 .metadata("response-timeout", responseTimeoutMillis))
                         .uri(properties.routes().audit()))
+                .route("usermanagement", route -> route
+                        .path("/api/v1/auth/**", "/api/v1/tenants", "/api/v1/tenants/**")
+                        .filters(filters -> common(filters, "usermanagement", properties, rateLimiter, keyResolver)
+                                .metadata("response-timeout", responseTimeoutMillis))
+                        .uri(properties.routes().usermanagement()))
                 .build();
     }
 
