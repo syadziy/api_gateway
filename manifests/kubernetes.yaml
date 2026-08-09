@@ -28,15 +28,15 @@ spec:
         - name: api-gateway
           image: example/api-gateway:1.0.0
           ports:
-            - { name: http, containerPort: 9100 }
+            - { name: http, containerPort: 9001 }
             - { name: management, containerPort: 9090 }
           env:
             - { name: SPRING_PROFILES_ACTIVE, value: production }
             - { name: APP_TIMEZONE, value: UTC }
             - { name: TZ, value: UTC }
-            - { name: ALERT_SERVICE_URI, value: "http://centralized-alert:9001" }
+            - { name: ALERT_SERVICE_URI, value: "http://centralized-alert:9003" }
             - { name: SCHEDULER_SERVICE_URI, value: "http://scheduler:9002" }
-            - { name: AUDIT_SERVICE_URI, value: "http://audit-log:9003" }
+            - { name: AUDIT_SERVICE_URI, value: "http://audit-log:9004" }
             - { name: USERMANAGEMENT_SERVICE_URI, value: "http://usermanagement:9005" }
             - { name: REDIS_HOST, value: "redis" }
             - { name: JWT_ISSUER_URI, value: "http://usermanagement:9005" }

@@ -20,11 +20,11 @@ public final class TestFixtures {
                         List.of("https://app.example"), true),
                 new GatewayProperties.RateLimit(20, 40, 1),
                 new GatewayProperties.Routes(
-                        URI.create("http://alert:9001"),
-                        URI.create("ws://alert:9001"),
+                        URI.create("http://alert:9003"),
+                        URI.create("ws://alert:9003"),
                         URI.create("http://scheduler:9002"),
-                        URI.create("http://audit:9003"),
+                        URI.create("http://audit:9004"),
                         URI.create("http://usermanagement:9005")),
-                new GatewayProperties.Canary(false, URI.create("http://alert-canary:9001"), 5));
+                new GatewayProperties.Canary(false, URI.create("http://alert-canary:9003"), 5));
     }
 }

@@ -24,10 +24,10 @@ sendiri. Maven Enforcer menggagalkan build bila `spring-webmvc`, `spring-boot-st
 
 | Route ID | Public path | Default upstream | Authorization |
 | --- | --- | --- | --- |
-| `centralized-alert` | `/api/v1/alert`, `/api/v1/alert/**` | `centralized-alert:9001` | `SCOPE_alert.write`; recipient dashboard memakai `SCOPE_alert.read-recipients`/`SCOPE_alert.manage-recipients` |
-| `centralized-alert-websocket` | `/ws/alerts` | `ws://centralized-alert:9001` | Handshake public; JWT dan `alert:read-notifications` divalidasi pada STOMP `CONNECT` oleh downstream |
+| `centralized-alert` | `/api/v1/alert`, `/api/v1/alert/**` | `centralized-alert:9003` | `SCOPE_alert.write`; recipient dashboard memakai `SCOPE_alert.read-recipients`/`SCOPE_alert.manage-recipients` |
+| `centralized-alert-websocket` | `/ws/alerts` | `ws://centralized-alert:9003` | Handshake public; JWT dan `alert:read-notifications` divalidasi pada STOMP `CONNECT` oleh downstream |
 | `scheduler` | tasks, task-groups, schedules, histories | `scheduler:9002` | scheduler read/manage scope |
-| `audit-log` | `/api/v1/audit-logs/**` | `audit-log:9003` | `SCOPE_audit.read` |
+| `audit-log` | `/api/v1/audit-logs/**` | `audit-log:9004` | `SCOPE_audit.read` |
 | `usermanagement` | `/api/v1/auth/**`, `/api/v1/tenants/**` | `usermanagement:9005` | login dan registrasi tenant public; operasi tenant memakai scope resource/action |
 
 Path dan query string diteruskan tanpa rewrite. URI upstream berasal dari environment variables
@@ -49,7 +49,7 @@ Weighted canary tersedia untuk alert:
 
 ```bash
 ALERT_CANARY_ENABLED=true
-ALERT_CANARY_SERVICE_URI=http://centralized-alert-canary:9001
+ALERT_CANARY_SERVICE_URI=http://centralized-alert-canary:9003
 ALERT_CANARY_WEIGHT=5
 ```
 
@@ -120,7 +120,7 @@ Endpoint management:
 
 ## Menjalankan lokal
 
-Prasyarat: JDK 21, Redis, serta service downstream pada port 9001-9003 dan 9005.
+Prasyarat: JDK 21, Redis, serta service downstream pada port 9003-9004 dan 9005.
 
 ```bash
 export GATEWAY_SECURITY_ENABLED=false
@@ -128,12 +128,12 @@ export REDIS_HOST=localhost
 mvn spring-boot:run
 ```
 
-Gateway tersedia di `http://localhost:9100`; management di `http://localhost:9090`.
+Gateway tersedia di `http://localhost:9001`; management di `http://localhost:9090`.
 
 Contoh:
 
 ```bash
-curl -i 'http://localhost:9100/api/v1/audit-logs?limit=20' \
+curl -i 'http://localhost:9001/api/v1/audit-logs?limit=20' \
   -H 'X-Correlation-Id: audit-query-001' \
   -H 'X-Client-Id: operations-ui'
 ```
@@ -168,7 +168,7 @@ Build image:
 ```bash
 mvn clean package
 docker build -t example/api-gateway:1.0.0 .
-docker run --rm --env-file .env -p 9100:9100 -p 9090:9090 example/api-gateway:1.0.0
+docker run --rm --env-file .env -p 9001:9001 -p 9090:9090 example/api-gateway:1.0.0
 ```
 
 Image memakai Java 21, UTC, dan user non-root. Isi `.env` dari `.env.example`, lalu gunakan hostname

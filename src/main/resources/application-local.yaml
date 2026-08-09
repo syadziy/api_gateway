@@ -2,9 +2,9 @@ gateway:
   security:
     enabled: false
   routes:
-    alert: ${ALERT_SERVICE_URI:http://localhost:9001}
+    alert: ${ALERT_SERVICE_URI:http://localhost:9003}
     scheduler: ${SCHEDULER_SERVICE_URI:http://localhost:9002}
-    audit: ${AUDIT_SERVICE_URI:http://localhost:9003}
+    audit: ${AUDIT_SERVICE_URI:http://localhost:9004}
     usermanagement: ${USERMANAGEMENT_SERVICE_URI:http://localhost:9005}
 
 spring:

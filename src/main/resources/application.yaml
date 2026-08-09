@@ -45,7 +45,7 @@ spring:
           redis-rate-limiter:
             include-headers: true
 server:
-  port: ${SERVER_PORT:9100}
+  port: ${SERVER_PORT:9001}
   shutdown: graceful
   max-http-request-header-size: ${MAX_REQUEST_HEADER_SIZE:16KB}
   forward-headers-strategy: none
@@ -70,14 +70,14 @@ gateway:
     burst-capacity: ${RATE_LIMIT_BURST_CAPACITY:40}
     requested-tokens: ${RATE_LIMIT_REQUESTED_TOKENS:1}
   routes:
-    alert: ${ALERT_SERVICE_URI:http://centralized-alert:9001}
-    alert-web-socket: ${ALERT_WEBSOCKET_URI:ws://centralized-alert:9001}
+    alert: ${ALERT_SERVICE_URI:http://centralized-alert:9003}
+    alert-web-socket: ${ALERT_WEBSOCKET_URI:ws://centralized-alert:9003}
     scheduler: ${SCHEDULER_SERVICE_URI:http://scheduler:9002}
-    audit: ${AUDIT_SERVICE_URI:http://audit-log:9003}
+    audit: ${AUDIT_SERVICE_URI:http://audit-log:9004}
     usermanagement: ${USERMANAGEMENT_SERVICE_URI:http://usermanagement:9005}
   canary:
     enabled: ${ALERT_CANARY_ENABLED:false}
-    alert: ${ALERT_CANARY_SERVICE_URI:http://centralized-alert-canary:9001}
+    alert: ${ALERT_CANARY_SERVICE_URI:http://centralized-alert-canary:9003}
     weight: ${ALERT_CANARY_WEIGHT:5}
 
 resilience4j:

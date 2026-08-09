@@ -52,14 +52,14 @@ public record GatewayProperties(
             @DefaultValue("1") @Positive int requestedTokens) {}
 
     public record Routes(
-            @DefaultValue("http://centralized-alert:9001") @NotNull URI alert,
-            @DefaultValue("ws://centralized-alert:9001") @NotNull URI alertWebSocket,
+            @DefaultValue("http://centralized-alert:9003") @NotNull URI alert,
+            @DefaultValue("ws://centralized-alert:9003") @NotNull URI alertWebSocket,
             @DefaultValue("http://scheduler:9002") @NotNull URI scheduler,
-            @DefaultValue("http://audit-log:9003") @NotNull URI audit,
+            @DefaultValue("http://audit-log:9004") @NotNull URI audit,
             @DefaultValue("http://usermanagement:9005") @NotNull URI usermanagement) {}
 
     public record Canary(
             @DefaultValue("false") boolean enabled,
-            @DefaultValue("http://centralized-alert-canary:9001") @NotNull URI alert,
+            @DefaultValue("http://centralized-alert-canary:9003") @NotNull URI alert,
             @DefaultValue("5") @Min(1) @Max(99) int weight) {}
 }

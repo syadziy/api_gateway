@@ -1,5 +1,5 @@
 {
-  "baseUrl": "http://localhost:9100",
+  "baseUrl": "http://localhost:9001",
   "routes": [
     {
       "routeId": "centralized-alert",
@@ -58,7 +58,7 @@
   ],
   "example": {
     "method": "GET",
-    "url": "http://localhost:9100/api/v1/audit-logs?limit=20",
+    "url": "http://localhost:9001/api/v1/audit-logs?limit=20",
     "headers": {
       "Authorization": "Bearer <access-token>",
       "X-Correlation-Id": "audit-query-001",
