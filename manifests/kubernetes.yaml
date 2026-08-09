@@ -74,7 +74,7 @@ metadata:
 spec:
   selector: { app: api-gateway }
   ports:
-    - { name: http, port: 9000, targetPort: http }
+    - { name: http, port: 9001, targetPort: http }
 ---
 apiVersion: v1
 kind: Service
