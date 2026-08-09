@@ -87,6 +87,10 @@ Kebijakan apakah registrasi tenant diizinkan tetap diputuskan oleh property
 yang sama dengan permission method-security usermanagement, misalnya `user:view` menjadi
 `SCOPE_user.view` pada gateway dan `PERM_user:view` pada downstream.
 
+Path `/internal/**` tidak memerlukan JWT, tetapi gateway tidak mendaftarkan downstream route untuk
+path tersebut. Jika endpoint internal gateway ditambahkan, aksesnya wajib dibatasi pada internal
+Ingress/Service dan network policy.
+
 CORS menggunakan exact-origin allowlist. Wildcard origin ditolak saat credentials aktif.
 Management endpoint berjalan pada port terpisah `9090` dan Kubernetes manifest mengeksposnya lewat
 ClusterIP terpisah, bukan public service.

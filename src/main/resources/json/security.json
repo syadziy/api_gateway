@@ -6,6 +6,7 @@
     "timeClaims": ["exp", "nbf"]
   },
   "scopeMapping": {
+    "/internal/**": "public-internal-network-only",
     "POST /api/v1/auth/login": "public",
     "POST /api/v1/tenants": "public",
     "PATCH /api/v1/tenants/*/token-policy": "tenant.update",

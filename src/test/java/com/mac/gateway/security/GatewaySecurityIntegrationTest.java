@@ -127,6 +127,13 @@ class GatewaySecurityIntegrationTest {
                 .expectStatus().isForbidden();
     }
 
+    @Test
+    void internalPathDoesNotRequireJwt() {
+        client.get().uri("/internal/readiness")
+                .exchange()
+                .expectStatus().value(GatewaySecurityIntegrationTest::assertAuthorized);
+    }
+
     private static Jwt jwt(String token, Instant now, String scope) {
         return Jwt.withTokenValue(token)
                 .header("alg", "RS256")
