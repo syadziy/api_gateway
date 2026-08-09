@@ -5,7 +5,11 @@
       "routeId": "centralized-alert",
       "paths": ["/api/v1/alert", "/api/v1/alert/**"],
       "upstream": "ALERT_SERVICE_URI",
-      "requiredAuthority": "SCOPE_alert.write"
+      "requiredAuthorities": [
+        "SCOPE_alert.write",
+        "SCOPE_alert.read-recipients",
+        "SCOPE_alert.manage-recipients"
+      ]
     },
     {
       "routeId": "scheduler",

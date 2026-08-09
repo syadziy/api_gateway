@@ -79,4 +79,43 @@ class GatewaySecurityIntegrationTest {
                 .expectBody()
                 .jsonPath("$.code").isEqualTo("GATEWAY_FORBIDDEN");
     }
+
+    @Test
+    void enforcesDedicatedRecipientDashboardScopes() {
+        Instant now = Instant.now();
+        Jwt readJwt = jwt("recipient-read", now, "alert.read-recipients");
+        Jwt manageJwt = jwt("recipient-manage", now, "alert.manage-recipients");
+        when(jwtDecoder.decode("recipient-read")).thenReturn(Mono.just(readJwt));
+        when(jwtDecoder.decode("recipient-manage")).thenReturn(Mono.just(manageJwt));
+
+        client.get().uri("/api/v1/alert/recipients")
+                .headers(headers -> headers.setBearerAuth("recipient-read"))
+                .exchange()
+                .expectStatus().value(status -> assertAuthorized(status));
+        client.post().uri("/api/v1/alert/recipients")
+                .headers(headers -> headers.setBearerAuth("recipient-read"))
+                .exchange()
+                .expectStatus().isForbidden();
+        client.post().uri("/api/v1/alert/recipients")
+                .headers(headers -> headers.setBearerAuth("recipient-manage"))
+                .exchange()
+                .expectStatus().value(status -> assertAuthorized(status));
+    }
+
+    private static Jwt jwt(String token, Instant now, String scope) {
+        return Jwt.withTokenValue(token)
+                .header("alg", "RS256")
+                .subject("user-1")
+                .issuer("https://issuer.example")
+                .audience(List.of("api-gateway"))
+                .issuedAt(now)
+                .expiresAt(now.plusSeconds(60))
+                .claim("scope", scope)
+                .build();
+    }
+
+    private static void assertAuthorized(int status) {
+        org.junit.jupiter.api.Assertions.assertNotEquals(401, status);
+        org.junit.jupiter.api.Assertions.assertNotEquals(403, status);
+    }
 }

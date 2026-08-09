@@ -24,7 +24,7 @@ sendiri. Maven Enforcer menggagalkan build bila `spring-webmvc`, `spring-boot-st
 
 | Route ID | Public path | Default upstream | Authorization |
 | --- | --- | --- | --- |
-| `centralized-alert` | `/api/v1/alert`, `/api/v1/alert/**` | `centralized-alert:9001` | `SCOPE_alert.write` untuk POST |
+| `centralized-alert` | `/api/v1/alert`, `/api/v1/alert/**` | `centralized-alert:9001` | `SCOPE_alert.write`; recipient dashboard memakai `SCOPE_alert.read-recipients`/`SCOPE_alert.manage-recipients` |
 | `scheduler` | tasks, task-groups, schedules, histories | `scheduler:9002` | scheduler read/manage scope |
 | `audit-log` | `/api/v1/audit-logs/**` | `audit-log:9003` | `SCOPE_audit.read` |
 

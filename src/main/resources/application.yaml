@@ -63,7 +63,7 @@ gateway:
     enabled: ${GATEWAY_SECURITY_ENABLED:true}
     issuer-uri: ${JWT_ISSUER_URI:http://localhost:9005}
     audience: ${JWT_AUDIENCE:api-gateway}
-    allowed-origins: ${GATEWAY_ALLOWED_ORIGINS:http://localhost:3000}
+    allowed-origins: ${GATEWAY_ALLOWED_ORIGINS:http://localhost:5173}
     allow-credentials: ${GATEWAY_CORS_ALLOW_CREDENTIALS:true}
   rate-limit:
     replenish-rate: ${RATE_LIMIT_REPLENISH_RATE:20}

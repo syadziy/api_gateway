@@ -7,6 +7,8 @@
   },
   "scopeMapping": {
     "POST /api/v1/alert/**": "alert.write",
+    "GET /api/v1/alert/recipients/**": "alert.read-recipients",
+    "POST|PUT|DELETE /api/v1/alert/recipients/**": "alert.manage-recipients",
     "GET /api/v1/audit-logs/**": "audit.read",
     "GET /api/v1/histories/**": "scheduler.read",
     "/api/v1/tasks/**": "scheduler.manage",
