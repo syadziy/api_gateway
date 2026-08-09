@@ -1,7 +1,18 @@
 FROM eclipse-temurin:21-jre-alpine
+
 WORKDIR /app
-RUN addgroup -S gateway && adduser -S gateway -G gateway
-COPY target/api-gateway-1.0.0.jar app.jar
-USER gateway:gateway
-EXPOSE 9000 9090
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "/app/app.jar"]
+
+ENV TZ=UTC \
+    JAVA_TOOL_OPTIONS="-Duser.timezone=UTC -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError"
+
+RUN apk add --no-cache tzdata \
+    && addgroup -g 10001 -S app \
+    && adduser -u 10001 -S app -G app
+
+ARG JAR_FILE=target/*.jar
+COPY --chown=app:app ${JAR_FILE} app.jar
+
+USER 10001:10001
+EXPOSE 9100 9090
+
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

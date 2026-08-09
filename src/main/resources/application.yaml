@@ -51,6 +51,7 @@ server:
   forward-headers-strategy: none
 
 gateway:
+  timezone: ${APP_TIMEZONE:UTC}
   http:
     correlation-header: ${CORRELATION_HEADER:X-Correlation-Id}
     client-id-header: ${CLIENT_ID_HEADER:X-Client-Id}

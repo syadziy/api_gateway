@@ -15,6 +15,8 @@ resilience, dan observability. PostgreSQL/business state bukan tanggung jawab ga
   tanpa menghapus platform load-balancing layer atau mendokumentasikan alasan.
 - Route code hanya berisi cross-cutting policy; business orchestration tetap di downstream.
 - Gunakan constructor injection dan type-safe properties di bawah `gateway.*`.
+- Gunakan UTC untuk timezone JVM, log, dan timestamp yang diteruskan gateway. Konversi timezone
+  hanya dilakukan oleh downstream pada boundary bisnis/presentation yang eksplisit.
 
 ## Security and logging
 

@@ -28,10 +28,12 @@ spec:
         - name: api-gateway
           image: example/api-gateway:1.0.0
           ports:
-            - { name: http, containerPort: 9000 }
+            - { name: http, containerPort: 9100 }
             - { name: management, containerPort: 9090 }
           env:
             - { name: SPRING_PROFILES_ACTIVE, value: production }
+            - { name: APP_TIMEZONE, value: UTC }
+            - { name: TZ, value: UTC }
             - { name: ALERT_SERVICE_URI, value: "http://centralized-alert:9001" }
             - { name: SCHEDULER_SERVICE_URI, value: "http://scheduler:9002" }
             - { name: AUDIT_SERVICE_URI, value: "http://audit-log:9003" }

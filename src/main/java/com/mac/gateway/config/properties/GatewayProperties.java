@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.net.URI;
 import java.time.Duration;
+import java.time.ZoneId;
 import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
@@ -17,6 +18,7 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties("gateway")
 public record GatewayProperties(
+        @DefaultValue("UTC") @NotNull ZoneId timezone,
         @Valid @DefaultValue Http http,
         @Valid @DefaultValue Security security,
         @Valid @DefaultValue RateLimit rateLimit,

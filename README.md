@@ -107,18 +107,20 @@ export REDIS_HOST=localhost
 mvn spring-boot:run
 ```
 
-Gateway tersedia di `http://localhost:9000`; management di `http://localhost:9090`.
+Gateway tersedia di `http://localhost:9100`; management di `http://localhost:9090`.
 
 Contoh:
 
 ```bash
-curl -i 'http://localhost:9000/api/v1/audit-logs?limit=20' \
+curl -i 'http://localhost:9100/api/v1/audit-logs?limit=20' \
   -H 'X-Correlation-Id: audit-query-001' \
   -H 'X-Client-Id: operations-ui'
 ```
 
 Referensi seluruh environment variable ada di `.env.example`; contoh kontrak tersedia di
 `src/main/resources/json/index.json`.
+
+Runtime, log timestamp, dan serialisasi waktu menggunakan UTC melalui `APP_TIMEZONE=UTC`.
 
 ## Build dan test
 
@@ -145,7 +147,12 @@ Build image:
 ```bash
 mvn clean package
 docker build -t example/api-gateway:1.0.0 .
+docker run --rm --env-file .env -p 9100:9100 -p 9090:9090 example/api-gateway:1.0.0
 ```
+
+Image memakai Java 21, UTC, dan user non-root. Isi `.env` dari `.env.example`, lalu gunakan hostname
+service Docker/Kubernetes untuk Redis dan seluruh downstream; `localhost` di dalam container
+menunjuk ke container gateway itu sendiri.
 
 ## Batasan yang disengaja
 
