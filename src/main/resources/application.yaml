@@ -45,7 +45,7 @@ spring:
           redis-rate-limiter:
             include-headers: true
 server:
-  port: ${SERVER_PORT:9000}
+  port: ${SERVER_PORT:9100}
   shutdown: graceful
   max-http-request-header-size: ${MAX_REQUEST_HEADER_SIZE:16KB}
   forward-headers-strategy: none
@@ -60,9 +60,9 @@ gateway:
     response-timeout: ${UPSTREAM_RESPONSE_TIMEOUT:10s}
   security:
     enabled: ${GATEWAY_SECURITY_ENABLED:true}
-    issuer-uri: ${JWT_ISSUER_URI:https://identity.example.com/realms/platform}
+    issuer-uri: ${JWT_ISSUER_URI:http://localhost:8081/realms/boilerplate}
     audience: ${JWT_AUDIENCE:api-gateway}
-    allowed-origins: ${GATEWAY_ALLOWED_ORIGINS:https://app.example.com}
+    allowed-origins: ${GATEWAY_ALLOWED_ORIGINS:http://localhost:3000}
     allow-credentials: ${GATEWAY_CORS_ALLOW_CREDENTIALS:true}
   rate-limit:
     replenish-rate: ${RATE_LIMIT_REPLENISH_RATE:20}
