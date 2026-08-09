@@ -10,3 +10,8 @@ spring:
   data:
     redis:
       host: ${REDIS_HOST:localhost}
+
+logging:
+  structured:
+    format:
+      console: ""
