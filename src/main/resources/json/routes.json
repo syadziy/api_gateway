@@ -12,6 +12,13 @@
       ]
     },
     {
+      "routeId": "centralized-alert-websocket",
+      "paths": ["/ws/alerts"],
+      "upstream": "ALERT_WEBSOCKET_URI",
+      "handshake": "public",
+      "stompConnectAuthority": "PERM_alert:read-notifications"
+    },
+    {
       "routeId": "scheduler",
       "paths": [
         "/api/v1/tasks/**",

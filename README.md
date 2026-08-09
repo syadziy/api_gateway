@@ -25,12 +25,13 @@ sendiri. Maven Enforcer menggagalkan build bila `spring-webmvc`, `spring-boot-st
 | Route ID | Public path | Default upstream | Authorization |
 | --- | --- | --- | --- |
 | `centralized-alert` | `/api/v1/alert`, `/api/v1/alert/**` | `centralized-alert:9001` | `SCOPE_alert.write`; recipient dashboard memakai `SCOPE_alert.read-recipients`/`SCOPE_alert.manage-recipients` |
+| `centralized-alert-websocket` | `/ws/alerts` | `ws://centralized-alert:9001` | Handshake public; JWT dan `alert:read-notifications` divalidasi pada STOMP `CONNECT` oleh downstream |
 | `scheduler` | tasks, task-groups, schedules, histories | `scheduler:9002` | scheduler read/manage scope |
 | `audit-log` | `/api/v1/audit-logs/**` | `audit-log:9003` | `SCOPE_audit.read` |
 | `usermanagement` | `/api/v1/auth/**`, `/api/v1/tenants/**` | `usermanagement:9005` | login dan registrasi tenant public; operasi tenant memakai scope resource/action |
 
 Path dan query string diteruskan tanpa rewrite. URI upstream berasal dari environment variables
-`ALERT_SERVICE_URI`, `SCHEDULER_SERVICE_URI`, `AUDIT_SERVICE_URI`, dan
+`ALERT_SERVICE_URI`, `ALERT_WEBSOCKET_URI`, `SCHEDULER_SERVICE_URI`, `AUDIT_SERVICE_URI`, dan
 `USERMANAGEMENT_SERVICE_URI`.
 
 ## Load balancing dan canary
@@ -90,6 +91,10 @@ yang sama dengan permission method-security usermanagement, misalnya `user:view`
 Path `/internal/**` tidak memerlukan JWT, tetapi gateway tidak mendaftarkan downstream route untuk
 path tersebut. Jika endpoint internal gateway ditambahkan, aksesnya wajib dibatasi pada internal
 Ingress/Service dan network policy.
+
+Handshake `/ws/alerts` dilewatkan tanpa JWT HTTP karena WebSocket API browser tidak dapat mengatur
+header `Authorization` pada upgrade request. Bearer token dikirim sebagai STOMP `CONNECT` header
+dan divalidasi kembali oleh `centralized_alert`; token tidak boleh dikirim melalui query URL.
 
 CORS menggunakan exact-origin allowlist. Wildcard origin ditolak saat credentials aktif.
 Management endpoint berjalan pada port terpisah `9090` dan Kubernetes manifest mengeksposnya lewat
