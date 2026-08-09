@@ -20,6 +20,8 @@ resilience, dan observability. PostgreSQL/business state bukan tanggung jawab ga
 
 ## Security and logging
 
+- The gateway is reactive and does not use `sdk_util`; maintain its public paths in the gateway
+  `SecurityWebFilterChain`. Do not add the servlet property `sdk.security.permit-all-paths`.
 - Production security deny-by-default. Verifikasi signature, issuer, audience, expiry, dan nbf JWT.
 - Sanitasi trusted/internal headers sebelum meneruskan request.
 - Jangan log token, cookie, API key, raw path dengan identifier, atau request/response body.
