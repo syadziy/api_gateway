@@ -57,7 +57,7 @@ class AuditEventFilterTest {
         ArgumentCaptor<AuditEvent> event = ArgumentCaptor.forClass(AuditEvent.class);
         verify(publisher).publish(event.capture());
         assertThat(event.getValue()).satisfies(value -> {
-            assertThat(value.actorId()).isEqualTo(userId.toString());
+            assertThat(value.actorId()).isEqualTo("owner");
             assertThat(value.actorName()).isEqualTo("owner");
             assertThat(value.action()).isEqualTo("USERMANAGEMENT_UPDATE");
             assertThat(value.outcome()).isEqualTo("SUCCESS");
@@ -65,6 +65,24 @@ class AuditEventFilterTest {
             assertThat(value.metadata()).containsEntry("tenantId", tenantId.toString())
                     .containsEntry("httpPath", "/api/v1/tenants/{id}/token-policy");
         });
+    }
+
+    @Test
+    void fallsBackToAuthenticatedPrincipalWhenUsernameClaimIsMissing() {
+        AuditEventPublisher publisher = mock(AuditEventPublisher.class);
+        AuditEventFilter filter = new AuditEventFilter(publisher, properties(),
+                Clock.fixed(NOW, ZoneOffset.UTC));
+        Jwt token = Jwt.withTokenValue("redacted").header("alg", "none")
+                .subject("fallback-user").build();
+        JwtAuthenticationToken authentication = new JwtAuthenticationToken(
+                token, List.of(), "fallback-user");
+        var exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/api/v1/tasks"))
+                .mutate().principal(Mono.just(authentication)).build();
+
+        filter.filter(exchange, chain -> Mono.empty()).block();
+
+        verify(publisher).publish(org.mockito.ArgumentMatchers.argThat(event ->
+                event.actorId().equals("fallback-user") && event.actorName().equals("fallback-user")));
     }
 
     @Test

@@ -80,10 +80,10 @@ public class AuditEventFilter implements GlobalFilter, Ordered {
 
     private Actor actor(Authentication authentication) {
         if (authentication instanceof JwtAuthenticationToken jwt && authentication.isAuthenticated()) {
-            String actorId = jwt.getToken().getSubject();
-            String actorName = jwt.getToken().getClaimAsString("username");
+            String username = nonBlank(
+                    jwt.getToken().getClaimAsString("username"), authentication.getName());
             String tenantId = jwt.getToken().getClaimAsString("tenant_id");
-            return new Actor(nonBlank(actorId, authentication.getName()), actorName, tenantId);
+            return new Actor(username, username, tenantId);
         }
         return authentication.isAuthenticated()
                 ? new Actor(nonBlank(authentication.getName(), properties.audit().fallbackActorId()),

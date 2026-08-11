@@ -114,8 +114,8 @@ duration, request/response size, trace ID, dan outcome. Raw path tidak dijadikan
 untuk mencegah kebocoran identifier dan high cardinality. Log console memakai ECS JSON.
 
 Gateway juga menerbitkan satu audit event untuk setiap request API ke topic
-`centralized-audit.requested`. Event mencatat UUID user dari JWT sebagai `actorId`, username sebagai
-`actorName`, tenant, route, method, status, outcome, dan path yang sudah dinormalisasi. UUID dan
+`centralized-audit.requested`. Event mencatat username dari JWT sebagai `actorId` dan `actorName`,
+beserta tenant, route, method, status, outcome, dan path yang sudah dinormalisasi. UUID dan
 segmen angka pada path diganti `{id}`; bearer token, body, query string, dan header rahasia tidak
 pernah dimasukkan ke audit metadata. Response 401/403 dari request yang sudah memasuki route
 dicatat sebagai `DENIED`.
