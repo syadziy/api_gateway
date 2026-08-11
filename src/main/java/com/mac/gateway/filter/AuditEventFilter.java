@@ -40,6 +40,9 @@ public class AuditEventFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        if (!properties.audit().enabled()) {
+            return chain.filter(exchange);
+        }
         return exchange.getPrincipal()
                 .filter(Authentication.class::isInstance)
                 .cast(Authentication.class)

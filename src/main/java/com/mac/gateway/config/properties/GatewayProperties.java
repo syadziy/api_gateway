@@ -22,6 +22,7 @@ public record GatewayProperties(
         @Valid @DefaultValue Http http,
         @Valid @DefaultValue Security security,
         @Valid @DefaultValue Audit audit,
+        @Valid @DefaultValue CentralizedLog centralizedLog,
         @Valid @DefaultValue RateLimit rateLimit,
         @Valid @DefaultValue Routes routes,
         @Valid @DefaultValue Canary canary) {
@@ -52,6 +53,11 @@ public record GatewayProperties(
             @DefaultValue("centralized-audit.requested") @NotBlank String topic,
             @DefaultValue("API-GATEWAY") @NotBlank String sourceSystem,
             @DefaultValue("anonymous") @NotBlank String fallbackActorId) {}
+
+    public record CentralizedLog(
+            @DefaultValue("true") boolean enabled,
+            @DefaultValue("centralized-log.requested") @NotBlank String topic,
+            @DefaultValue("64KB") @NotNull org.springframework.util.unit.DataSize maxBodySize) {}
 
     public record RateLimit(
             @DefaultValue("20") @Positive int replenishRate,

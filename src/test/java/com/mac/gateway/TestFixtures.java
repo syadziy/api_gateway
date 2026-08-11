@@ -12,13 +12,19 @@ public final class TestFixtures {
     private TestFixtures() {}
 
     public static GatewayProperties properties() {
+        return properties(true, true);
+    }
+
+    public static GatewayProperties properties(boolean auditEnabled, boolean centralizedLogEnabled) {
         return new GatewayProperties(
                 ZoneId.of("UTC"),
                 new GatewayProperties.Http("X-Correlation-Id", "X-Client-Id", 64,
                         DataSize.ofMegabytes(5), Duration.ofSeconds(2), Duration.ofSeconds(10)),
                 new GatewayProperties.Security(false, "https://issuer.example", "gateway",
                         List.of("https://app.example"), true),
-                new GatewayProperties.Audit(true, "centralized-audit.requested", "API-GATEWAY", "anonymous"),
+                new GatewayProperties.Audit(auditEnabled, "centralized-audit.requested", "API-GATEWAY", "anonymous"),
+                new GatewayProperties.CentralizedLog(
+                        centralizedLogEnabled, "centralized-log.requested", DataSize.ofKilobytes(64)),
                 new GatewayProperties.RateLimit(20, 40, 1),
                 new GatewayProperties.Routes(
                         URI.create("http://alert:9003"),

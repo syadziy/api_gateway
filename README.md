@@ -120,6 +120,26 @@ segmen angka pada path diganti `{id}`; bearer token, body, query string, dan hea
 pernah dimasukkan ke audit metadata. Response 401/403 dari request yang sudah memasuki route
 dicatat sebagai `DENIED`.
 
+Gateway menerbitkan request/response observability event terpisah ke topic
+`centralized-log.requested`. Event berisi method, path tanpa query string, route, status, durasi,
+actor username, tenant, header allowlist, serta body JSON yang dibatasi ukurannya. Authorization,
+cookie, password, token, secret, credential, dan data kartu disaring; body non-JSON tidak disimpan.
+Publishing dilakukan asynchronous dan kegagalannya tidak menggagalkan request pengguna.
+
+Kedua integrasi dapat dikendalikan secara independen melalui environment variable:
+
+```dotenv
+# Audit aktivitas pengguna ke audit_log
+GATEWAY_AUDIT_ENABLED=true
+
+# Request/response API ke centralized_log
+GATEWAY_CENTRALIZED_LOG_ENABLED=true
+```
+
+Gunakan `false` untuk menonaktifkan integrasi terkait. Saat dinonaktifkan, filter langsung
+meneruskan request tanpa membentuk event, membaca body untuk logging, atau mengirim pesan Kafka.
+Perubahan environment variable membutuhkan restart API Gateway.
+
 Endpoint management:
 
 - `/actuator/health/liveness`

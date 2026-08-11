@@ -4,6 +4,7 @@ import static com.mac.gateway.TestFixtures.properties;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import com.mac.gateway.entities.dto.AuditEvent;
 import com.mac.gateway.service.AuditEventPublisher;
@@ -29,6 +30,21 @@ import reactor.core.publisher.Mono;
 class AuditEventFilterTest {
 
     private static final Instant NOW = Instant.parse("2026-08-11T00:00:00Z");
+
+    @Test
+    void bypassesAuditImplementationWhenDisabled() {
+        AuditEventPublisher publisher = mock(AuditEventPublisher.class);
+        AuditEventFilter filter = new AuditEventFilter(publisher, properties(false, true),
+                Clock.fixed(NOW, ZoneOffset.UTC));
+        MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/api/v1/tasks"));
+
+        filter.filter(exchange, current -> {
+            current.getResponse().setStatusCode(HttpStatus.OK);
+            return Mono.empty();
+        }).block();
+
+        verifyNoInteractions(publisher);
+    }
 
     @Test
     void publishesAuthenticatedRequestWithJwtActorAndNormalizedPath() {
