@@ -12,6 +12,7 @@ tidak terjadi double load balancing.
 - Spring Cloud Gateway Server WebFlux 5.0.2 dan Reactor Netty
 - Spring Security OAuth2 Resource Server
 - Redis reactive rate limiter
+- Kafka audit event publisher
 - Resilience4j circuit breaker dan bulkhead
 - Actuator, Prometheus, Micrometer Tracing, dan ECS JSON logging
 
@@ -111,6 +112,13 @@ UUID. Header diteruskan ke downstream dan dikembalikan pada response.
 Access log menggunakan structured fields, termasuk route ID, upstream host, method, status,
 duration, request/response size, trace ID, dan outcome. Raw path tidak dijadikan log/metric field
 untuk mencegah kebocoran identifier dan high cardinality. Log console memakai ECS JSON.
+
+Gateway juga menerbitkan satu audit event untuk setiap request API ke topic
+`centralized-audit.requested`. Event mencatat UUID user dari JWT sebagai `actorId`, username sebagai
+`actorName`, tenant, route, method, status, outcome, dan path yang sudah dinormalisasi. UUID dan
+segmen angka pada path diganti `{id}`; bearer token, body, query string, dan header rahasia tidak
+pernah dimasukkan ke audit metadata. Response 401/403 dari request yang sudah memasuki route
+dicatat sebagai `DENIED`.
 
 Endpoint management:
 

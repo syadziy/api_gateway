@@ -21,6 +21,7 @@ public record GatewayProperties(
         @DefaultValue("UTC") @NotNull ZoneId timezone,
         @Valid @DefaultValue Http http,
         @Valid @DefaultValue Security security,
+        @Valid @DefaultValue Audit audit,
         @Valid @DefaultValue RateLimit rateLimit,
         @Valid @DefaultValue Routes routes,
         @Valid @DefaultValue Canary canary) {
@@ -45,6 +46,12 @@ public record GatewayProperties(
             return !allowCredentials || allowedOrigins == null || !allowedOrigins.contains("*");
         }
     }
+
+    public record Audit(
+            @DefaultValue("true") boolean enabled,
+            @DefaultValue("centralized-audit.requested") @NotBlank String topic,
+            @DefaultValue("API-GATEWAY") @NotBlank String sourceSystem,
+            @DefaultValue("anonymous") @NotBlank String fallbackActorId) {}
 
     public record RateLimit(
             @DefaultValue("20") @Positive int replenishRate,

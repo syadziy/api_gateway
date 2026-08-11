@@ -9,6 +9,7 @@
     "/internal/**": "public-internal-network-only",
     "POST /api/v1/auth/login": "public",
     "POST /api/v1/tenants": "public",
+    "GET /api/v1/tenants": "tenant.view",
     "PATCH /api/v1/tenants/*/token-policy": "tenant.update",
     "GET /api/v1/tenants/*/users": "user.view",
     "POST /api/v1/tenants/*/users": "user.create",

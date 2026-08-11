@@ -26,6 +26,7 @@ import reactor.core.publisher.Mono;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
         "gateway.security.enabled=false",
+        "gateway.audit.enabled=false",
         "management.server.port=0",
         "gateway.http.max-request-size=1KB"
 })

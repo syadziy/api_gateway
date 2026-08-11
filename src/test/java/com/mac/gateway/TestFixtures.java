@@ -18,6 +18,7 @@ public final class TestFixtures {
                         DataSize.ofMegabytes(5), Duration.ofSeconds(2), Duration.ofSeconds(10)),
                 new GatewayProperties.Security(false, "https://issuer.example", "gateway",
                         List.of("https://app.example"), true),
+                new GatewayProperties.Audit(true, "centralized-audit.requested", "API-GATEWAY", "anonymous"),
                 new GatewayProperties.RateLimit(20, 40, 1),
                 new GatewayProperties.Routes(
                         URI.create("http://alert:9003"),

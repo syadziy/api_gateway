@@ -22,6 +22,7 @@ import reactor.core.publisher.Mono;
         "gateway.security.enabled=true",
         "gateway.security.issuer-uri=https://issuer.example",
         "gateway.security.audience=api-gateway",
+        "gateway.audit.enabled=false",
         "management.server.port=0"
 })
 class GatewaySecurityIntegrationTest {

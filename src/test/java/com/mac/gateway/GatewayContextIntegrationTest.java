@@ -13,6 +13,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK, properties = {
         "gateway.security.enabled=false",
+        "gateway.audit.enabled=false",
         "management.server.port=0",
         "gateway.canary.enabled=true",
         "gateway.canary.alert=http://alert-canary.test:9003",

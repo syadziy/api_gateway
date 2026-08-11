@@ -41,6 +41,8 @@ public class SecurityConfig {
                         .pathMatchers("/internal/**").permitAll()
                         .pathMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
                         .pathMatchers(HttpMethod.POST, "/api/v1/tenants").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/api/v1/tenants")
+                            .hasAuthority("SCOPE_tenant.view")
                         .pathMatchers(HttpMethod.PATCH, "/api/v1/tenants/*/token-policy")
                             .hasAuthority("SCOPE_tenant.update")
                         .pathMatchers(HttpMethod.GET, "/api/v1/tenants/*/users")
