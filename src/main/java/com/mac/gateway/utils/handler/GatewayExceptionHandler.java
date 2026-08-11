@@ -5,6 +5,10 @@ import com.mac.gateway.utils.constant.GatewayLogFields;
 import com.mac.gateway.utils.logging.StructuredLog;
 import io.github.resilience4j.bulkhead.BulkheadFullException;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import java.net.ConnectException;
+import java.net.NoRouteToHostException;
+import java.net.UnknownHostException;
+import java.nio.channels.UnresolvedAddressException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
@@ -69,11 +73,15 @@ public class GatewayExceptionHandler implements WebExceptionHandler {
         if (exception instanceof CallNotPermittedException
                 || exception instanceof BulkheadFullException
                 || exception instanceof RedisConnectionFailureException
-                || exception instanceof DataAccessResourceFailureException) {
+                || exception instanceof DataAccessResourceFailureException
+                || hasCause(exception, ConnectException.class)
+                || hasCause(exception, NoRouteToHostException.class)
+                || hasCause(exception, UnknownHostException.class)
+                || hasCause(exception, UnresolvedAddressException.class)) {
             return new ErrorMapping(
                     HttpStatus.SERVICE_UNAVAILABLE,
-                    "GATEWAY_UNAVAILABLE",
-                    "Service is temporarily unavailable");
+                    "RC-503",
+                    "service unavailable");
         }
         return internalError();
     }
@@ -92,10 +100,24 @@ public class GatewayExceptionHandler implements WebExceptionHandler {
             case FORBIDDEN -> "Access is denied";
             case NOT_FOUND -> "Route was not found";
             case TOO_MANY_REQUESTS -> "Rate limit exceeded";
-            case SERVICE_UNAVAILABLE -> "Service is temporarily unavailable";
+            case SERVICE_UNAVAILABLE -> "service unavailable";
             case GATEWAY_TIMEOUT -> "Upstream service timed out";
             default -> status.is4xxClientError() ? "Request was rejected" : "Upstream request failed";
         };
+    }
+
+    private static boolean hasCause(Throwable exception, Class<? extends Throwable> type) {
+        Throwable current = exception;
+        for (int depth = 0; current != null && depth < 16; depth++) {
+            if (type.isInstance(current)) {
+                return true;
+            }
+            if (current == current.getCause()) {
+                return false;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     private record ErrorMapping(HttpStatus status, String code, String message) {}

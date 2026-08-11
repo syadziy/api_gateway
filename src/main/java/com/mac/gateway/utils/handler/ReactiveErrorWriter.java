@@ -39,7 +39,7 @@ public class ReactiveErrorWriter {
             exchange.getResponse().getHeaders().set(properties.http().correlationHeader(), traceId);
         }
         byte[] bytes = objectMapper.writeValueAsBytes(
-                new GatewayErrorResponse(code, message, traceId, clock.instant()));
+                new GatewayErrorResponse(code, message, null, null, traceId, clock.instant()));
         exchange.getResponse().setStatusCode(status);
         exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
         exchange.getResponse().getHeaders().setContentLength(bytes.length);
