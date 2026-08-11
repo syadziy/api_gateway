@@ -61,6 +61,8 @@ public class SecurityConfig {
                             .hasAuthority("SCOPE_permission.create")
                         .pathMatchers(HttpMethod.GET, "/api/v1/alert/recipients/**")
                             .hasAuthority("SCOPE_alert.read-recipients")
+                        .pathMatchers(HttpMethod.GET, "/api/v1/alert/delivery-history/**")
+                            .hasAuthority("SCOPE_alert.read-notifications")
                         .pathMatchers(HttpMethod.POST, "/api/v1/alert/recipients/**")
                             .hasAuthority("SCOPE_alert.manage-recipients")
                         .pathMatchers(HttpMethod.PUT, "/api/v1/alert/recipients/**")
