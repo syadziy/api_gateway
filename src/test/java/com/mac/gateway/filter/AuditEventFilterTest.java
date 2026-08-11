@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.cloud.gateway.route.Route;
@@ -43,6 +44,26 @@ class AuditEventFilterTest {
             return Mono.empty();
         }).block();
 
+        verifyNoInteractions(publisher);
+    }
+
+    @Test
+    void bypassesWebSocketTrafficWithoutSkippingTheGatewayChain() {
+        AuditEventPublisher publisher = mock(AuditEventPublisher.class);
+        AuditEventFilter filter = new AuditEventFilter(publisher, properties(),
+                Clock.fixed(NOW, ZoneOffset.UTC));
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.get("/ws/alerts")
+                        .header("Upgrade", "websocket")
+                        .header("Connection", "Upgrade"));
+        AtomicBoolean chainInvoked = new AtomicBoolean();
+
+        filter.filter(exchange, current -> {
+            chainInvoked.set(true);
+            return Mono.empty();
+        }).block();
+
+        assertThat(chainInvoked).isTrue();
         verifyNoInteractions(publisher);
     }
 

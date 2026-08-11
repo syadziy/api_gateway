@@ -118,7 +118,8 @@ Gateway juga menerbitkan satu audit event untuk setiap request API ke topic
 beserta tenant, route, method, status, outcome, dan path yang sudah dinormalisasi. UUID dan
 segmen angka pada path diganti `{id}`; bearer token, body, query string, dan header rahasia tidak
 pernah dimasukkan ke audit metadata. Response 401/403 dari request yang sudah memasuki route
-dicatat sebagai `DENIED`.
+dicatat sebagai `DENIED`. Trafik WebSocket, termasuk handshake pada `/ws/alerts`, tidak diterbitkan
+sebagai audit event karena bukan aktivitas bisnis REST dan dapat menghasilkan noise atau duplikasi.
 
 Gateway menerbitkan request/response observability event terpisah ke topic
 `centralized-log.requested`. Event berisi method, path tanpa query string, route, status, durasi,

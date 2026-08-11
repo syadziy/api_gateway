@@ -14,6 +14,7 @@ import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.cloud.gateway.route.Route;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.core.Ordered;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.security.core.Authentication;
@@ -40,7 +41,7 @@ public class AuditEventFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        if (!properties.audit().enabled()) {
+        if (!properties.audit().enabled() || isWebSocket(exchange)) {
             return chain.filter(exchange);
         }
         return exchange.getPrincipal()
@@ -108,6 +109,12 @@ public class AuditEventFilter implements GlobalFilter, Ordered {
             default -> method.name();
         };
         return routeId.toUpperCase(Locale.ROOT).replace('-', '_') + "_" + operation;
+    }
+
+    private static boolean isWebSocket(ServerWebExchange exchange) {
+        String upgrade = exchange.getRequest().getHeaders().getFirst(HttpHeaders.UPGRADE);
+        return "websocket".equalsIgnoreCase(upgrade)
+                || exchange.getRequest().getPath().value().startsWith("/ws/");
     }
 
     private static String clientIp(ServerWebExchange exchange) {
