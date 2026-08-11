@@ -24,9 +24,12 @@
     "POST|PUT|DELETE /api/v1/alert/recipients/**": "alert.manage-recipients",
     "GET /api/v1/audit-logs/**": "audit.read",
     "GET /api/v1/histories/**": "scheduler.read",
-    "/api/v1/tasks/**": "scheduler.manage",
-    "/api/v1/task-groups/**": "scheduler.manage",
-    "/api/v1/schedules/**": "scheduler.manage"
+    "GET /api/v1/tasks/**": "scheduler.read",
+    "GET /api/v1/task-groups/**": "scheduler.read",
+    "GET /api/v1/schedules/**": "scheduler.read",
+    "POST /api/v1/tasks/**": "scheduler.manage",
+    "POST /api/v1/task-groups/**": "scheduler.manage",
+    "POST /api/v1/schedules/**": "scheduler.manage"
   },
   "sampleClaims": {
     "sub": "user-123",

@@ -74,7 +74,11 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.POST, "/api/v1/alert/**").hasAuthority("SCOPE_alert.write")
                         .pathMatchers(HttpMethod.GET, "/api/v1/audit-logs/**").hasAuthority("SCOPE_audit.read")
                         .pathMatchers(HttpMethod.GET, "/api/v1/histories/**").hasAuthority("SCOPE_scheduler.read")
-                        .pathMatchers("/api/v1/tasks/**", "/api/v1/task-groups/**", "/api/v1/schedules/**")
+                        .pathMatchers(HttpMethod.GET, "/api/v1/tasks/**", "/api/v1/task-groups/**",
+                                "/api/v1/schedules/**")
+                            .hasAuthority("SCOPE_scheduler.read")
+                        .pathMatchers(HttpMethod.POST, "/api/v1/tasks/**", "/api/v1/task-groups/**",
+                                "/api/v1/schedules/**")
                             .hasAuthority("SCOPE_scheduler.manage")
                         .anyExchange().denyAll())
                 .exceptionHandling(errors -> errors

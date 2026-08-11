@@ -129,6 +129,28 @@ class GatewaySecurityIntegrationTest {
     }
 
     @Test
+    void separatesSchedulerReadAndManageScopesByHttpMethod() {
+        Instant now = Instant.now();
+        when(jwtDecoder.decode("scheduler-read"))
+                .thenReturn(Mono.just(jwt("scheduler-read", now, "scheduler.read")));
+        when(jwtDecoder.decode("scheduler-manage"))
+                .thenReturn(Mono.just(jwt("scheduler-manage", now, "scheduler.manage")));
+
+        client.get().uri("/api/v1/tasks")
+                .headers(headers -> headers.setBearerAuth("scheduler-read"))
+                .exchange()
+                .expectStatus().value(GatewaySecurityIntegrationTest::assertAuthorized);
+        client.post().uri("/api/v1/tasks")
+                .headers(headers -> headers.setBearerAuth("scheduler-read"))
+                .exchange()
+                .expectStatus().isForbidden();
+        client.post().uri("/api/v1/tasks")
+                .headers(headers -> headers.setBearerAuth("scheduler-manage"))
+                .exchange()
+                .expectStatus().value(GatewaySecurityIntegrationTest::assertAuthorized);
+    }
+
+    @Test
     void internalPathDoesNotRequireJwt() {
         client.get().uri("/internal/readiness")
                 .exchange()
