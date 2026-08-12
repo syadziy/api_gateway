@@ -69,6 +69,7 @@ public record GatewayProperties(
             @DefaultValue("ws://centralized-alert:9003") @NotNull URI alertWebSocket,
             @DefaultValue("http://scheduler:9002") @NotNull URI scheduler,
             @DefaultValue("http://audit-log:9004") @NotNull URI audit,
+            @DefaultValue("http://centralized-log:9006") @NotNull URI centralizedLog,
             @DefaultValue("http://usermanagement:9005") @NotNull URI usermanagement) {}
 
     public record Canary(

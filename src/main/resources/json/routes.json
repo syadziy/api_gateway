@@ -36,6 +36,12 @@
       "requiredAuthority": "SCOPE_audit.read"
     },
     {
+      "routeId": "centralized-log",
+      "paths": ["/api/v1/gateway-logs", "/api/v1/gateway-logs/**"],
+      "upstream": "CENTRALIZED_LOG_SERVICE_URI",
+      "requiredAuthority": "SCOPE_audit.read"
+    },
+    {
       "routeId": "usermanagement",
       "paths": ["/api/v1/auth/**", "/api/v1/tenants", "/api/v1/tenants/**"],
       "upstream": "USERMANAGEMENT_SERVICE_URI",

@@ -45,6 +45,7 @@ public final class GatewayActorResolver {
 
     private Actor resolveFromRequest(ServerWebExchange exchange, GatewayProperties properties) {
         String headerActor = firstNonBlank(
+                exchange.getAttribute(GatewayLogFieldsAttribute.REQUEST_USERNAME),
                 exchange.getRequest().getHeaders().getFirst(GatewayHeaders.AUTHENTICATED_USER),
                 exchange.getRequest().getHeaders().getFirst("X-User-Name"),
                 exchange.getRequest().getHeaders().getFirst("X-Username"));

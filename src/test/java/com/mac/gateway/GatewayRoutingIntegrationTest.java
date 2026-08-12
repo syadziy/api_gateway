@@ -46,6 +46,7 @@ class GatewayRoutingIntegrationTest {
         registry.add("gateway.routes.alert", () -> UPSTREAM.url("/").toString());
         registry.add("gateway.routes.scheduler", () -> UPSTREAM.url("/").toString());
         registry.add("gateway.routes.audit", () -> UPSTREAM.url("/").toString());
+        registry.add("gateway.routes.centralized-log", () -> UPSTREAM.url("/").toString());
         registry.add("gateway.routes.usermanagement", () -> UPSTREAM.url("/").toString());
     }
 

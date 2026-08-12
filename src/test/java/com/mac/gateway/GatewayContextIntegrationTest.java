@@ -22,6 +22,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
         "gateway.routes.alert-web-socket=ws://alert.test:9003",
         "gateway.routes.scheduler=http://scheduler.test:9002",
         "gateway.routes.audit=http://audit.test:9004",
+        "gateway.routes.centralized-log=http://centralized-log.test:9006",
         "gateway.routes.usermanagement=http://usermanagement.test:9005"
 })
 class GatewayContextIntegrationTest {
@@ -43,6 +44,7 @@ class GatewayContextIntegrationTest {
                 "centralized-alert-websocket", "ws://alert.test:9003",
                 "scheduler", "http://scheduler.test:9002",
                 "audit-log", "http://audit.test:9004",
+                "centralized-log", "http://centralized-log.test:9006",
                 "usermanagement", "http://usermanagement.test:9005"));
     }
 }

@@ -59,17 +59,35 @@ public class GatewayLogEventFilter implements WebFilter, Ordered {
         long startedNanos = System.nanoTime();
         Capture responseCapture = new Capture(limit);
         ServerHttpResponseDecorator response = responseDecorator(exchange, responseCapture);
-        return actorResolver.resolve(exchange, properties).flatMap(actor -> captureRequest(exchange, limit).flatMap(requestCapture -> {
-            ServerWebExchange decorated = exchange.mutate()
-                    .request(new ServerHttpRequestDecorator(exchange.getRequest()) {
-                        @Override public Flux<DataBuffer> getBody() {
-                            return requestCapture.bytes.length == 0 ? Flux.empty()
-                                    : Flux.just(exchange.getResponse().bufferFactory().wrap(requestCapture.bytes));
-                        }
-                    }).response(response).build();
-            return chain.filter(decorated).doFinally(signal -> publish(
-                    decorated, actor, startedAt, startedNanos, requestCapture, responseCapture));
-        }));
+        return captureRequest(exchange, limit).flatMap(requestCapture -> {
+            captureLoginUsername(exchange, requestCapture.bytes);
+            return actorResolver.resolve(exchange, properties).flatMap(actor -> {
+                ServerWebExchange decorated = exchange.mutate()
+                        .request(new ServerHttpRequestDecorator(exchange.getRequest()) {
+                            @Override public Flux<DataBuffer> getBody() {
+                                return requestCapture.bytes.length == 0 ? Flux.empty()
+                                        : Flux.just(exchange.getResponse().bufferFactory().wrap(requestCapture.bytes));
+                            }
+                        }).response(response).build();
+                return chain.filter(decorated).doFinally(signal -> publish(
+                        decorated, actor, startedAt, startedNanos, requestCapture, responseCapture));
+            });
+        });
+    }
+
+    private void captureLoginUsername(ServerWebExchange exchange, byte[] body) {
+        if (!"/api/v1/auth/login".equals(exchange.getRequest().getPath().value()) || body.length == 0
+                || !isJson(exchange.getRequest().getHeaders().getContentType())) {
+            return;
+        }
+        try {
+            String username = objectMapper.readTree(body).path("username").asText(null);
+            if (username != null && !username.isBlank()) {
+                exchange.getAttributes().put(GatewayLogFieldsAttribute.REQUEST_USERNAME, username.trim());
+            }
+        } catch (Exception ignored) {
+            // Invalid JSON is handled by the authentication service.
+        }
     }
 
     private Mono<CaptureResult> captureRequest(ServerWebExchange exchange, int limit) {

@@ -88,6 +88,7 @@ gateway:
     alert-web-socket: ${ALERT_WEBSOCKET_URI:ws://centralized-alert:9003}
     scheduler: ${SCHEDULER_SERVICE_URI:http://scheduler:9002}
     audit: ${AUDIT_SERVICE_URI:http://audit-log:9004}
+    centralized-log: ${CENTRALIZED_LOG_SERVICE_URI:http://centralized-log:9006}
     usermanagement: ${USERMANAGEMENT_SERVICE_URI:http://usermanagement:9005}
   canary:
     enabled: ${ALERT_CANARY_ENABLED:false}

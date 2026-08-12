@@ -70,7 +70,7 @@ public class AuditEventFilter implements GlobalFilter, Ordered {
                 clock.instant(),
                 actor.username(),
                 actor.username(),
-                action(routeId, exchange.getRequest().getMethod()),
+                action(routeId, exchange.getRequest().getMethod(), normalizedPath),
                 routeId.toUpperCase(Locale.ROOT),
                 null,
                 statusCode < 400 ? "SUCCESS" : statusCode == 401 || statusCode == 403 ? "DENIED" : "FAILURE",
@@ -85,6 +85,13 @@ public class AuditEventFilter implements GlobalFilter, Ordered {
     }
 
     static String action(String routeId, HttpMethod method) {
+        return action(routeId, method, null);
+    }
+
+    static String action(String routeId, HttpMethod method, String path) {
+        if (method == HttpMethod.POST && "/api/v1/auth/login".equals(path)) {
+            return "AUTH_LOGIN";
+        }
         String operation = switch (method.name()) {
             case "GET", "HEAD" -> "READ";
             case "POST" -> "CREATE";

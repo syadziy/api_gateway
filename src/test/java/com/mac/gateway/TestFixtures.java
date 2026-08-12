@@ -31,6 +31,7 @@ public final class TestFixtures {
                         URI.create("ws://alert:9003"),
                         URI.create("http://scheduler:9002"),
                         URI.create("http://audit:9004"),
+                        URI.create("http://centralized-log:9006"),
                         URI.create("http://usermanagement:9005")),
                 new GatewayProperties.Canary(false, URI.create("http://alert-canary:9003"), 5));
     }

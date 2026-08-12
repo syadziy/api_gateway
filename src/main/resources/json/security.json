@@ -23,6 +23,7 @@
     "GET /api/v1/alert/recipients/**": "alert.read-recipients",
     "POST|PUT|DELETE /api/v1/alert/recipients/**": "alert.manage-recipients",
     "GET /api/v1/audit-logs/**": "audit.read",
+    "GET /api/v1/gateway-logs/**": "audit.read",
     "GET /api/v1/histories/**": "scheduler.read",
     "GET /api/v1/tasks/**": "scheduler.read",
     "GET /api/v1/task-groups/**": "scheduler.read",

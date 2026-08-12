@@ -161,6 +161,23 @@ class AuditEventFilterTest {
                 event.actorId().equals("client") && event.actorName().equals("client")));
     }
 
+    @Test
+    void publishesLoginWithUsernameFromCapturedRequestBody() {
+        AuditEventPublisher publisher = mock(AuditEventPublisher.class);
+        AuditEventFilter filter = new AuditEventFilter(publisher, properties(),
+                Clock.fixed(NOW, ZoneOffset.UTC), actorResolver());
+        var exchange = MockServerWebExchange.from(MockServerHttpRequest.post("/api/v1/auth/login"));
+        exchange.getAttributes().put(GatewayLogFieldsAttribute.REQUEST_USERNAME, "login.owner");
+        exchange.getAttributes().put(ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR, route("usermanagement"));
+
+        filter.filter(exchange, chain -> Mono.empty()).block();
+
+        verify(publisher).publish(org.mockito.ArgumentMatchers.argThat(event ->
+                event.action().equals("AUTH_LOGIN")
+                        && event.actorId().equals("login.owner")
+                        && event.actorName().equals("login.owner")));
+    }
+
     private static Route route(String id) {
         return Route.async().id(id).uri(URI.create("http://service")).predicate(value -> true).build();
     }

@@ -151,6 +151,24 @@ class GatewaySecurityIntegrationTest {
     }
 
     @Test
+    void protectsGatewayLogMonitoringWithAuditReadScope() {
+        Instant now = Instant.now();
+        when(jwtDecoder.decode("audit-read"))
+                .thenReturn(Mono.just(jwt("audit-read", now, "audit.read")));
+        when(jwtDecoder.decode("scheduler-only"))
+                .thenReturn(Mono.just(jwt("scheduler-only", now, "scheduler.read")));
+
+        client.get().uri("/api/v1/gateway-logs")
+                .headers(headers -> headers.setBearerAuth("audit-read"))
+                .exchange()
+                .expectStatus().value(GatewaySecurityIntegrationTest::assertAuthorized);
+        client.get().uri("/api/v1/gateway-logs")
+                .headers(headers -> headers.setBearerAuth("scheduler-only"))
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+
+    @Test
     void internalPathDoesNotRequireJwt() {
         client.get().uri("/internal/readiness")
                 .exchange()

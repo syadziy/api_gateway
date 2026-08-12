@@ -5,6 +5,7 @@ gateway:
     alert: ${ALERT_SERVICE_URI:http://localhost:9003}
     scheduler: ${SCHEDULER_SERVICE_URI:http://localhost:9002}
     audit: ${AUDIT_SERVICE_URI:http://localhost:9004}
+    centralized-log: ${CENTRALIZED_LOG_SERVICE_URI:http://localhost:9006}
     usermanagement: ${USERMANAGEMENT_SERVICE_URI:http://localhost:9005}
 
 spring:

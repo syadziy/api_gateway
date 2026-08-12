@@ -71,6 +71,11 @@ public class RouteConfig {
                         .filters(filters -> common(filters, "audit-log", properties, rateLimiter, keyResolver)
                                 .metadata("response-timeout", responseTimeoutMillis))
                         .uri(properties.routes().audit()))
+                .route("centralized-log", route -> route
+                        .path("/api/v1/gateway-logs", "/api/v1/gateway-logs/**")
+                        .filters(filters -> common(filters, "centralized-log", properties, rateLimiter, keyResolver)
+                                .metadata("response-timeout", responseTimeoutMillis))
+                        .uri(properties.routes().centralizedLog()))
                 .route("usermanagement", route -> route
                         .path("/api/v1/auth/**", "/api/v1/tenants", "/api/v1/tenants/**")
                         .filters(filters -> common(filters, "usermanagement", properties, rateLimiter, keyResolver)
