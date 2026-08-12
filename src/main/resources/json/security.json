@@ -25,7 +25,7 @@
     "GET /api/v1/alert/recipients/**": "alert.read-recipients",
     "POST|PUT|DELETE /api/v1/alert/recipients/**": "alert.manage-recipients",
     "GET /api/v1/audit-logs/**": "audit.read",
-    "GET /api/v1/gateway-logs/**": "audit.read",
+    "GET /api/v1/gateway-logs/**": "gateway-log.read",
     "GET /api/v1/histories/**": "scheduler.read",
     "GET /api/v1/tasks/**": "scheduler.read",
     "GET /api/v1/task-groups/**": "scheduler.read",
@@ -39,8 +39,8 @@
     "iss": "http://localhost:9005",
     "aud": ["api-gateway"],
     "roles": ["AUDIT_OPERATOR"],
-    "permissions": ["audit:read", "scheduler:read"],
-    "scope": "audit.read scheduler.read",
+    "permissions": ["audit:read", "gateway-log:read", "scheduler:read"],
+    "scope": "audit.read gateway-log.read scheduler.read",
     "username": "operations.user"
   }
 }

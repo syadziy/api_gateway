@@ -36,6 +36,14 @@ resilience, dan observability. PostgreSQL/business state bukan tanggung jawab ga
   `POST /api/v1/auth/logout` sebagai public route yang hanya menghapus cookie. Actor resolver harus
   dapat mengambil actor dari principal, Bearer header, atau cookie agar profile lokal tidak kembali
   mencatat actor `unknown-user`.
+- Setiap menu atau action frontend baru yang memanggil gateway wajib mempunyai permission granular
+  end-to-end. Authority pada `SecurityConfig`, mapping audit, kontrak JSON, katalog/migration User
+  Management, konstanta dan guard frontend, serta allow/deny tests harus diperbarui bersama. Jangan
+  memakai permission menu lain hanya karena endpoint berada pada service atau domain yang berdekatan.
+- `GET /api/v1/gateway-logs/**` khusus membutuhkan `gateway-log:read`; `audit:read` hanya untuk
+  `/api/v1/audit-logs/**`.
+- Audit action untuk `GET /api/v1/gateway-logs/**` wajib `LOG_READ`. Jangan menurunkannya menjadi
+  `AUDIT_READ` atau `GATEWAY_LOG_READ`; permission enforcement tetap `gateway-log:read`.
 
 ## Audit event contract
 

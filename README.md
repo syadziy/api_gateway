@@ -29,7 +29,7 @@ sendiri. Maven Enforcer menggagalkan build bila `spring-webmvc`, `spring-boot-st
 | `centralized-alert-websocket` | `/ws/alerts` | `ws://centralized-alert:9003` | Handshake public; JWT dan `alert:read-notifications` divalidasi pada STOMP `CONNECT` oleh downstream |
 | `scheduler` | tasks, task-groups, schedules, histories | `scheduler:9002` | scheduler read/manage scope |
 | `audit-log` | `/api/v1/audit-logs/**` | `audit-log:9004` | `SCOPE_audit.read` |
-| `centralized-log` | `/api/v1/gateway-logs/**` | `centralized-log:9006` | `SCOPE_audit.read` |
+| `centralized-log` | `/api/v1/gateway-logs/**` | `centralized-log:9006` | `SCOPE_gateway-log.read` |
 | `usermanagement` | `/api/v1/auth/**`, `/api/v1/tenants/**` | `usermanagement:9005` | login dan registrasi tenant public; operasi tenant memakai scope resource/action |
 
 Path dan query string diteruskan tanpa rewrite. URI upstream berasal dari environment variables

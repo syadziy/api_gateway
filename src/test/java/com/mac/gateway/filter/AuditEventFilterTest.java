@@ -204,7 +204,9 @@ class AuditEventFilterTest {
         assertThat(AuditEventFilter.action("scheduler", org.springframework.http.HttpMethod.POST,
                 "/api/v1/schedules")).isEqualTo("SCHEDULER_SCHEDULE_MANAGE");
         assertThat(AuditEventFilter.action("audit-log", org.springframework.http.HttpMethod.GET,
-                "/api/v1/gateway-logs")).isEqualTo("AUDIT_READ");
+                "/api/v1/gateway-logs")).isEqualTo("LOG_READ");
+        assertThat(AuditEventFilter.action("centralized-log", org.springframework.http.HttpMethod.GET,
+                "/api/v1/gateway-logs/11111111-1111-1111-1111-111111111111")).isEqualTo("LOG_READ");
         assertThat(AuditEventFilter.requiredPermission(org.springframework.http.HttpMethod.PUT,
                 "/api/v1/tenants/acme/users/user-1/roles")).isEqualTo("role.assign");
     }

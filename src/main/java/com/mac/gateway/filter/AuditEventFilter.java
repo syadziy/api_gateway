@@ -125,6 +125,10 @@ public class AuditEventFilter implements GlobalFilter, Ordered {
     }
 
     private static String permissionAction(String permission, String path) {
+        if ("gateway-log.read".equals(permission)
+                && isPathWithin(path, "/api/v1/gateway-logs")) {
+            return "LOG_READ";
+        }
         String schedulerResource = schedulerResource(path);
         if (schedulerResource != null && permission.startsWith("scheduler.")) {
             String operation = permission.substring("scheduler.".length());
@@ -156,9 +160,11 @@ public class AuditEventFilter implements GlobalFilter, Ordered {
             if (isPathWithin(path, "/api/v1/alert/delivery-history")) {
                 return "alert.read-notifications";
             }
-            if (isPathWithin(path, "/api/v1/audit-logs")
-                    || isPathWithin(path, "/api/v1/gateway-logs")) {
+            if (isPathWithin(path, "/api/v1/audit-logs")) {
                 return "audit.read";
+            }
+            if (isPathWithin(path, "/api/v1/gateway-logs")) {
+                return "gateway-log.read";
             }
             if (isPathWithin(path, "/api/v1/histories") || isSchedulerPath(path)) {
                 return "scheduler.read";

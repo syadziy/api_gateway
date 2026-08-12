@@ -39,7 +39,7 @@
       "routeId": "centralized-log",
       "paths": ["/api/v1/gateway-logs", "/api/v1/gateway-logs/**"],
       "upstream": "CENTRALIZED_LOG_SERVICE_URI",
-      "requiredAuthority": "SCOPE_audit.read"
+      "requiredAuthority": "SCOPE_gateway-log.read"
     },
     {
       "routeId": "usermanagement",
