@@ -22,7 +22,7 @@ public final class TestFixtures {
                         DataSize.ofMegabytes(5), Duration.ofSeconds(2), Duration.ofSeconds(10)),
                 new GatewayProperties.Security(false, "https://issuer.example", "gateway",
                         List.of("https://app.example"), true),
-                new GatewayProperties.Audit(auditEnabled, "centralized-audit.requested", "API-GATEWAY", "anonymous"),
+                new GatewayProperties.Audit(auditEnabled, "centralized-audit.requested", "API-GATEWAY", "unknown-user"),
                 new GatewayProperties.CentralizedLog(
                         centralizedLogEnabled, "centralized-log.requested", DataSize.ofKilobytes(64)),
                 new GatewayProperties.RateLimit(20, 40, 1),

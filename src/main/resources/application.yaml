@@ -74,7 +74,7 @@ gateway:
     enabled: ${GATEWAY_AUDIT_ENABLED:true}
     topic: ${GATEWAY_AUDIT_TOPIC:centralized-audit.requested}
     source-system: ${GATEWAY_AUDIT_SOURCE_SYSTEM:API-GATEWAY}
-    fallback-actor-id: ${GATEWAY_AUDIT_FALLBACK_ACTOR_ID:anonymous}
+    fallback-actor-id: ${GATEWAY_AUDIT_FALLBACK_ACTOR_ID:unknown-user}
   centralized-log:
     enabled: ${GATEWAY_CENTRALIZED_LOG_ENABLED:true}
     topic: ${GATEWAY_CENTRALIZED_LOG_TOPIC:centralized-log.requested}

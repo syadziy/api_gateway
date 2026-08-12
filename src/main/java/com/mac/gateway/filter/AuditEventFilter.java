@@ -17,8 +17,6 @@ import org.springframework.core.Ordered;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -32,11 +30,14 @@ public class AuditEventFilter implements GlobalFilter, Ordered {
     private final AuditEventPublisher publisher;
     private final GatewayProperties properties;
     private final Clock clock;
+    private final GatewayActorResolver actorResolver;
 
-    public AuditEventFilter(AuditEventPublisher publisher, GatewayProperties properties, Clock clock) {
+    public AuditEventFilter(AuditEventPublisher publisher, GatewayProperties properties, Clock clock,
+            GatewayActorResolver actorResolver) {
         this.publisher = publisher;
         this.properties = properties;
         this.clock = clock;
+        this.actorResolver = actorResolver;
     }
 
     @Override
@@ -44,16 +45,12 @@ public class AuditEventFilter implements GlobalFilter, Ordered {
         if (!properties.audit().enabled() || isWebSocket(exchange)) {
             return chain.filter(exchange);
         }
-        return exchange.getPrincipal()
-                .filter(Authentication.class::isInstance)
-                .cast(Authentication.class)
-                .map(this::actor)
-                .defaultIfEmpty(Actor.anonymous(properties.audit().fallbackActorId()))
+        return actorResolver.resolve(exchange, properties)
                 .flatMap(actor -> chain.filter(exchange)
                         .doFinally(signal -> publish(exchange, actor)));
     }
 
-    private void publish(ServerWebExchange exchange, Actor actor) {
+    private void publish(ServerWebExchange exchange, GatewayActorResolver.Actor actor) {
         UUID eventId = UUID.randomUUID();
         String traceId = exchange.getAttributeOrDefault(GatewayLogFieldsAttribute.TRACE_ID, eventId.toString());
         HttpStatusCode status = exchange.getResponse().getStatusCode();
@@ -80,19 +77,6 @@ public class AuditEventFilter implements GlobalFilter, Ordered {
                 traceId,
                 clientIp(exchange),
                 metadata));
-    }
-
-    private Actor actor(Authentication authentication) {
-        if (authentication instanceof JwtAuthenticationToken jwt && authentication.isAuthenticated()) {
-            String username = nonBlank(
-                    jwt.getToken().getClaimAsString("username"), authentication.getName());
-            String tenantId = jwt.getToken().getClaimAsString("tenant_id");
-            return new Actor(username, username, tenantId);
-        }
-        return authentication.isAuthenticated()
-                ? new Actor(nonBlank(authentication.getName(), properties.audit().fallbackActorId()),
-                        authentication.getName(), null)
-                : Actor.anonymous(properties.audit().fallbackActorId());
     }
 
     static String normalizePath(String path) {
@@ -122,18 +106,8 @@ public class AuditEventFilter implements GlobalFilter, Ordered {
         return address == null || address.getAddress() == null ? null : address.getAddress().getHostAddress();
     }
 
-    private static String nonBlank(String value, String fallback) {
-        return value == null || value.isBlank() ? fallback : value;
-    }
-
     @Override
     public int getOrder() {
         return -140;
-    }
-
-    private record Actor(String id, String name, String tenantId) {
-        private static Actor anonymous(String fallbackId) {
-            return new Actor(fallbackId, null, null);
-        }
     }
 }

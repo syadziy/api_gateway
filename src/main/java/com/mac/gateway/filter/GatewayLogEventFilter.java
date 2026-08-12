@@ -22,8 +22,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpResponseDecorator;
 import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
@@ -40,13 +38,15 @@ public class GatewayLogEventFilter implements WebFilter, Ordered {
     private final GatewayProperties properties;
     private final ObjectMapper objectMapper;
     private final Clock clock;
+    private final GatewayActorResolver actorResolver;
 
     public GatewayLogEventFilter(GatewayLogEventPublisher publisher, GatewayProperties properties,
-            ObjectMapper objectMapper, Clock clock) {
+            ObjectMapper objectMapper, Clock clock, GatewayActorResolver actorResolver) {
         this.publisher = publisher;
         this.properties = properties;
         this.objectMapper = objectMapper;
         this.clock = clock;
+        this.actorResolver = actorResolver;
     }
 
     @Override
@@ -59,7 +59,7 @@ public class GatewayLogEventFilter implements WebFilter, Ordered {
         long startedNanos = System.nanoTime();
         Capture responseCapture = new Capture(limit);
         ServerHttpResponseDecorator response = responseDecorator(exchange, responseCapture);
-        return actor(exchange).flatMap(actor -> captureRequest(exchange, limit).flatMap(requestCapture -> {
+        return actorResolver.resolve(exchange, properties).flatMap(actor -> captureRequest(exchange, limit).flatMap(requestCapture -> {
             ServerWebExchange decorated = exchange.mutate()
                     .request(new ServerHttpRequestDecorator(exchange.getRequest()) {
                         @Override public Flux<DataBuffer> getBody() {
@@ -93,7 +93,7 @@ public class GatewayLogEventFilter implements WebFilter, Ordered {
         };
     }
 
-    private void publish(ServerWebExchange exchange, Actor actor, Instant occurredAt, long startedNanos,
+    private void publish(ServerWebExchange exchange, GatewayActorResolver.Actor actor, Instant occurredAt, long startedNanos,
             CaptureResult request, Capture response) {
         UUID eventId = UUID.randomUUID();
         Route route = exchange.getAttribute(ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR);
@@ -111,17 +111,6 @@ public class GatewayLogEventFilter implements WebFilter, Ordered {
                 response.truncated));
     }
 
-    private Mono<Actor> actor(ServerWebExchange exchange) {
-        return exchange.getPrincipal().filter(Authentication.class::isInstance).cast(Authentication.class)
-                .map(authentication -> {
-                    if (authentication instanceof JwtAuthenticationToken jwt && authentication.isAuthenticated()) {
-                        String username = jwt.getToken().getClaimAsString("username");
-                        return new Actor(nonBlank(username, authentication.getName()), jwt.getToken().getClaimAsString("tenant_id"));
-                    }
-                    return new Actor(nonBlank(authentication.getName(), "anonymous"), null);
-                }).defaultIfEmpty(new Actor("anonymous", null));
-    }
-
     private static Map<String, String> selectedHeaders(HttpHeaders headers, Set<String> allowed) {
         Map<String, String> result = new LinkedHashMap<>();
         headers.forEach((name, values) -> { if (allowed.contains(name.toLowerCase())) result.put(name, String.join(",", values)); });
@@ -130,10 +119,7 @@ public class GatewayLogEventFilter implements WebFilter, Ordered {
     private static boolean isJson(MediaType mediaType) { return mediaType != null && (MediaType.APPLICATION_JSON.includes(mediaType) || mediaType.getSubtype().endsWith("+json")); }
     private static byte[] limited(byte[] value, long max) { if (value.length <= max) return value; return java.util.Arrays.copyOf(value, Math.toIntExact(max)); }
     private static String clientIp(ServerWebExchange exchange) { InetSocketAddress address = exchange.getRequest().getRemoteAddress(); return address == null || address.getAddress() == null ? null : address.getAddress().getHostAddress(); }
-    private static String nonBlank(String value, String fallback) { return value == null || value.isBlank() ? fallback : value; }
     @Override public int getOrder() { return -130; }
-
-    private record Actor(String username, String tenantId) {}
     private record CaptureResult(byte[] bytes, boolean truncated) {}
     private static final class Capture {
         private final int limit; private final ByteArrayOutputStream stream = new ByteArrayOutputStream(); private boolean truncated;

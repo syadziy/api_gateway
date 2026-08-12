@@ -52,7 +52,7 @@ public record GatewayProperties(
             @DefaultValue("true") boolean enabled,
             @DefaultValue("centralized-audit.requested") @NotBlank String topic,
             @DefaultValue("API-GATEWAY") @NotBlank String sourceSystem,
-            @DefaultValue("anonymous") @NotBlank String fallbackActorId) {}
+            @DefaultValue("unknown-user") @NotBlank String fallbackActorId) {}
 
     public record CentralizedLog(
             @DefaultValue("true") boolean enabled,

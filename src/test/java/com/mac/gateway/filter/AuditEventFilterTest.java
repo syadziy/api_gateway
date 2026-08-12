@@ -137,7 +137,7 @@ class AuditEventFilterTest {
 
         ArgumentCaptor<AuditEvent> event = ArgumentCaptor.forClass(AuditEvent.class);
         verify(publisher).publish(event.capture());
-        assertThat(event.getValue().actorId()).isEqualTo("anonymous");
+        assertThat(event.getValue().actorId()).isEqualTo("unknown-user");
         assertThat(event.getValue().action()).isEqualTo("UNMATCHED_READ");
         assertThat(event.getValue().outcome()).isEqualTo("DENIED");
         assertThat(event.getValue().metadata()).containsEntry("httpPath", "/api/v1/tasks/{id}");
