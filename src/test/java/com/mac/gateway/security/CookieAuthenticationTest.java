@@ -38,6 +38,15 @@ class CookieAuthenticationTest {
     }
 
     @Test
+    void ignoresStaleCredentialsOnLogin() {
+        var exchange = MockServerWebExchange.from(MockServerHttpRequest.post("/api/v1/auth/login")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer stale-header-token")
+                .cookie(ResponseCookie.from("ACCESS_TOKEN", "stale-cookie-token").build()));
+
+        assertThat(new CookieBearerTokenConverter("ACCESS_TOKEN").convert(exchange).block()).isNull();
+    }
+
+    @Test
     void relaysCookieAsBearerHeaderWithoutDuplicatingTokenDownstream() {
         CookieTokenRelayFilter filter = new CookieTokenRelayFilter(properties());
         var exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/api/v1/tasks")
@@ -74,5 +83,24 @@ class CookieAuthenticationTest {
         assertThat(forwarded.get().getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION))
                 .isEqualTo("Bearer header-token");
         assertThat(forwarded.get().getRequest().getHeaders().getFirst(HttpHeaders.COOKIE)).isNull();
+    }
+
+    @Test
+    void stripsStaleCredentialsBeforeRelayingLogin() {
+        CookieTokenRelayFilter filter = new CookieTokenRelayFilter(properties());
+        var exchange = MockServerWebExchange.from(MockServerHttpRequest.post("/api/v1/auth/login")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer stale-header-token")
+                .cookie(ResponseCookie.from("ACCESS_TOKEN", "stale-cookie-token").build())
+                .cookie(ResponseCookie.from("theme", "dark").build()));
+        AtomicReference<ServerWebExchange> forwarded = new AtomicReference<>();
+
+        filter.filter(exchange, current -> {
+            forwarded.set(current);
+            return Mono.empty();
+        }).block();
+
+        assertThat(forwarded.get().getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION)).isNull();
+        assertThat(forwarded.get().getRequest().getHeaders().getFirst(HttpHeaders.COOKIE))
+                .isEqualTo("theme=dark");
     }
 }

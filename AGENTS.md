@@ -44,6 +44,9 @@ resilience, dan observability. PostgreSQL/business state bukan tanggung jawab ga
   `/api/v1/audit-logs/**`.
 - Audit action untuk `GET /api/v1/gateway-logs/**` wajib `LOG_READ`. Jangan menurunkannya menjadi
   `AUDIT_READ` atau `GATEWAY_LOG_READ`; permission enforcement tetap `gateway-log:read`.
+- Public credential endpoints (`POST /auth/login`, `POST /auth/logout`, dan tenant registration)
+  wajib mengabaikan serta tidak meneruskan cookie/Bearer token lama. Token invalid tidak boleh
+  membuat endpoint pemulihan login berhenti di security filter dengan 401.
 
 ## Audit event contract
 
