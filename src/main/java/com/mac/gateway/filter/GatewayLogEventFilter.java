@@ -101,8 +101,8 @@ public class GatewayLogEventFilter implements WebFilter, Ordered {
         boolean requestJson = isJson(exchange.getRequest().getHeaders().getContentType());
         boolean responseJson = isJson(exchange.getResponse().getHeaders().getContentType());
         publisher.publish(new GatewayLogEvent(eventId, occurredAt,
-                exchange.getAttributeOrDefault(GatewayLogFieldsAttribute.TRACE_ID, eventId.toString()), actor.username,
-                actor.tenantId, route == null ? "unmatched" : route.getId(), exchange.getRequest().getMethod().name(),
+                exchange.getAttributeOrDefault(GatewayLogFieldsAttribute.TRACE_ID, eventId.toString()), actor.username(),
+                actor.tenantId(), route == null ? "unmatched" : route.getId(), exchange.getRequest().getMethod().name(),
                 exchange.getRequest().getPath().value(), selectedHeaders(exchange.getRequest().getHeaders(), REQUEST_HEADERS),
                 requestJson ? BodySanitizer.sanitize(objectMapper, limited(request.bytes, properties.centralizedLog().maxBodySize().toBytes())) : null,
                 status, selectedHeaders(exchange.getResponse().getHeaders(), RESPONSE_HEADERS),

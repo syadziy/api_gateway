@@ -36,7 +36,7 @@ class AuditEventFilterTest {
     void bypassesAuditImplementationWhenDisabled() {
         AuditEventPublisher publisher = mock(AuditEventPublisher.class);
         AuditEventFilter filter = new AuditEventFilter(publisher, properties(false, true),
-                Clock.fixed(NOW, ZoneOffset.UTC));
+                Clock.fixed(NOW, ZoneOffset.UTC), actorResolver());
         MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/api/v1/tasks"));
 
         filter.filter(exchange, current -> {
@@ -51,7 +51,7 @@ class AuditEventFilterTest {
     void bypassesWebSocketTrafficWithoutSkippingTheGatewayChain() {
         AuditEventPublisher publisher = mock(AuditEventPublisher.class);
         AuditEventFilter filter = new AuditEventFilter(publisher, properties(),
-                Clock.fixed(NOW, ZoneOffset.UTC));
+                Clock.fixed(NOW, ZoneOffset.UTC), actorResolver());
         MockServerWebExchange exchange = MockServerWebExchange.from(
                 MockServerHttpRequest.get("/ws/alerts")
                         .header("Upgrade", "websocket")
@@ -71,7 +71,7 @@ class AuditEventFilterTest {
     void publishesAuthenticatedRequestWithJwtActorAndNormalizedPath() {
         AuditEventPublisher publisher = mock(AuditEventPublisher.class);
         AuditEventFilter filter = new AuditEventFilter(publisher, properties(),
-                Clock.fixed(NOW, ZoneOffset.UTC));
+                Clock.fixed(NOW, ZoneOffset.UTC), actorResolver());
         UUID userId = UUID.randomUUID();
         UUID tenantId = UUID.randomUUID();
         UUID resourceId = UUID.randomUUID();
@@ -108,7 +108,7 @@ class AuditEventFilterTest {
     void fallsBackToAuthenticatedPrincipalWhenUsernameClaimIsMissing() {
         AuditEventPublisher publisher = mock(AuditEventPublisher.class);
         AuditEventFilter filter = new AuditEventFilter(publisher, properties(),
-                Clock.fixed(NOW, ZoneOffset.UTC));
+                Clock.fixed(NOW, ZoneOffset.UTC), actorResolver());
         Jwt token = Jwt.withTokenValue("redacted").header("alg", "none")
                 .subject("fallback-user").build();
         JwtAuthenticationToken authentication = new JwtAuthenticationToken(
@@ -126,7 +126,7 @@ class AuditEventFilterTest {
     void publishesDeniedAnonymousUnmatchedRequest() {
         AuditEventPublisher publisher = mock(AuditEventPublisher.class);
         AuditEventFilter filter = new AuditEventFilter(publisher, properties(),
-                Clock.fixed(NOW, ZoneOffset.UTC));
+                Clock.fixed(NOW, ZoneOffset.UTC), actorResolver());
         MockServerWebExchange exchange = MockServerWebExchange.from(
                 MockServerHttpRequest.get("/api/v1/tasks/123"));
 
@@ -148,7 +148,7 @@ class AuditEventFilterTest {
     void supportsNonJwtAuthenticationAndPathUtilities() {
         AuditEventPublisher publisher = mock(AuditEventPublisher.class);
         AuditEventFilter filter = new AuditEventFilter(publisher, properties(),
-                Clock.fixed(NOW, ZoneOffset.UTC));
+                Clock.fixed(NOW, ZoneOffset.UTC), actorResolver());
         var exchange = MockServerWebExchange.from(MockServerHttpRequest.delete("/api/v1/tasks/42"))
                 .mutate().principal(Mono.just(new TestingAuthenticationToken("client", "", "ROLE_USER"))).build();
         exchange.getAttributes().put(ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR, route("scheduler"));
@@ -163,5 +163,9 @@ class AuditEventFilterTest {
 
     private static Route route(String id) {
         return Route.async().id(id).uri(URI.create("http://service")).predicate(value -> true).build();
+    }
+
+    private static GatewayActorResolver actorResolver() {
+        return new GatewayActorResolver(new tools.jackson.databind.ObjectMapper());
     }
 }

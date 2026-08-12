@@ -32,7 +32,7 @@ class GatewayLogEventFilterTest {
     void bypassesCentralizedLoggingWhenDisabled() {
         GatewayLogEventPublisher publisher = mock(GatewayLogEventPublisher.class);
         GatewayLogEventFilter filter = new GatewayLogEventFilter(publisher, properties(true, false), new ObjectMapper(),
-                Clock.fixed(Instant.parse("2026-08-11T00:00:00Z"), ZoneOffset.UTC));
+                Clock.fixed(Instant.parse("2026-08-11T00:00:00Z"), ZoneOffset.UTC), actorResolver());
         ServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/api/v1/tasks"));
 
         filter.filter(exchange, current -> Mono.empty()).block();
@@ -44,7 +44,7 @@ class GatewayLogEventFilterTest {
     void capturesSanitizedJsonRequestAndResponse() {
         GatewayLogEventPublisher publisher = mock(GatewayLogEventPublisher.class);
         GatewayLogEventFilter filter = new GatewayLogEventFilter(publisher, properties(), new ObjectMapper(),
-                Clock.fixed(Instant.parse("2026-08-11T00:00:00Z"), ZoneOffset.UTC));
+                Clock.fixed(Instant.parse("2026-08-11T00:00:00Z"), ZoneOffset.UTC), actorResolver());
         var request = MockServerHttpRequest.post("/api/v1/auth/login")
                 .header(HttpHeaders.CONTENT_TYPE, "application/json")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer hidden")
@@ -74,5 +74,9 @@ class GatewayLogEventFilterTest {
         assertThat(event.responseBody().get("accessToken").asText()).isEqualTo("[REDACTED]");
         assertThat(event.responseStatus()).isEqualTo(200);
         assertThat(filter.getOrder()).isEqualTo(-130);
+    }
+
+    private static GatewayActorResolver actorResolver() {
+        return new GatewayActorResolver(new ObjectMapper());
     }
 }
