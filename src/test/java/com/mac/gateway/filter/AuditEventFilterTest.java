@@ -139,7 +139,7 @@ class AuditEventFilterTest {
         ArgumentCaptor<AuditEvent> event = ArgumentCaptor.forClass(AuditEvent.class);
         verify(publisher).publish(event.capture());
         assertThat(event.getValue().actorId()).isEqualTo("unknown-user");
-        assertThat(event.getValue().action()).isEqualTo("SCHEDULER_READ");
+        assertThat(event.getValue().action()).isEqualTo("SCHEDULER_TASK_READ");
         assertThat(event.getValue().outcome()).isEqualTo("DENIED");
         assertThat(event.getValue().metadata())
                 .containsEntry("httpPath", "/api/v1/tasks/{id}")
@@ -190,9 +190,15 @@ class AuditEventFilterTest {
         assertThat(AuditEventFilter.action("centralized-alert", org.springframework.http.HttpMethod.POST,
                 "/api/v1/alert/recipients")).isEqualTo("ALERT_MANAGE_RECIPIENTS");
         assertThat(AuditEventFilter.action("scheduler", org.springframework.http.HttpMethod.GET,
-                "/api/v1/tasks")).isEqualTo("SCHEDULER_READ");
+                "/api/v1/histories")).isEqualTo("SCHEDULER_HISTORY_READ");
+        assertThat(AuditEventFilter.action("scheduler", org.springframework.http.HttpMethod.GET,
+                "/api/v1/schedules")).isEqualTo("SCHEDULER_SCHEDULE_READ");
+        assertThat(AuditEventFilter.action("scheduler", org.springframework.http.HttpMethod.GET,
+                "/api/v1/task-groups")).isEqualTo("SCHEDULER_TASK_GROUP_READ");
+        assertThat(AuditEventFilter.action("scheduler", org.springframework.http.HttpMethod.GET,
+                "/api/v1/tasks")).isEqualTo("SCHEDULER_TASK_READ");
         assertThat(AuditEventFilter.action("scheduler", org.springframework.http.HttpMethod.POST,
-                "/api/v1/schedules")).isEqualTo("SCHEDULER_MANAGE");
+                "/api/v1/schedules")).isEqualTo("SCHEDULER_SCHEDULE_MANAGE");
         assertThat(AuditEventFilter.action("audit-log", org.springframework.http.HttpMethod.GET,
                 "/api/v1/gateway-logs")).isEqualTo("AUDIT_READ");
         assertThat(AuditEventFilter.requiredPermission(org.springframework.http.HttpMethod.PUT,

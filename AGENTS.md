@@ -36,7 +36,9 @@ resilience, dan observability. PostgreSQL/business state bukan tanggung jawab ga
 - Untuk endpoint terproteksi, field `action` harus berasal dari permission yang diminta, bukan dari
   route ID dan HTTP method. Ubah permission menjadi uppercase snake case; contoh
   `alert.read-recipients` menjadi `ALERT_READ_RECIPIENTS`, `tenant.update` menjadi
-  `TENANT_UPDATE`, dan `scheduler.manage` menjadi `SCHEDULER_MANAGE`.
+  `TENANT_UPDATE`. Permission scheduler dipakai oleh beberapa resource, sehingga action wajib
+  menyertakan resource endpoint: `SCHEDULER_HISTORY_READ`, `SCHEDULER_SCHEDULE_READ`,
+  `SCHEDULER_TASK_GROUP_READ`, `SCHEDULER_TASK_READ`, atau `<RESOURCE>_MANAGE` untuk operasi kelola.
 - Pertahankan action endpoint publik yang spesifik: `POST /api/v1/auth/login` menggunakan
   `AUTH_LOGIN` dan `POST /api/v1/tenants` menggunakan `TENANT_REGISTER`. Endpoint tanpa mapping
   permission atau action khusus boleh menggunakan fallback `<ROUTE_ID>_<OPERATION>`.

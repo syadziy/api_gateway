@@ -105,7 +105,7 @@ public class AuditEventFilter implements GlobalFilter, Ordered {
         }
         String permission = requiredPermission(method, path);
         if (permission != null) {
-            return permission.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]+", "_");
+            return permissionAction(permission, path);
         }
         String operation = switch (method.name()) {
             case "GET", "HEAD" -> "READ";
@@ -115,6 +115,15 @@ public class AuditEventFilter implements GlobalFilter, Ordered {
             default -> method.name();
         };
         return routeId.toUpperCase(Locale.ROOT).replace('-', '_') + "_" + operation;
+    }
+
+    private static String permissionAction(String permission, String path) {
+        String schedulerResource = schedulerResource(path);
+        if (schedulerResource != null && permission.startsWith("scheduler.")) {
+            String operation = permission.substring("scheduler.".length());
+            return "SCHEDULER_" + schedulerResource + "_" + operation.toUpperCase(Locale.ROOT);
+        }
+        return permission.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]+", "_");
     }
 
     static String requiredPermission(HttpMethod method, String path) {
@@ -186,6 +195,25 @@ public class AuditEventFilter implements GlobalFilter, Ordered {
         return isPathWithin(path, "/api/v1/tasks")
                 || isPathWithin(path, "/api/v1/task-groups")
                 || isPathWithin(path, "/api/v1/schedules");
+    }
+
+    private static String schedulerResource(String path) {
+        if (path == null) {
+            return null;
+        }
+        if (isPathWithin(path, "/api/v1/histories")) {
+            return "HISTORY";
+        }
+        if (isPathWithin(path, "/api/v1/schedules")) {
+            return "SCHEDULE";
+        }
+        if (isPathWithin(path, "/api/v1/task-groups")) {
+            return "TASK_GROUP";
+        }
+        if (isPathWithin(path, "/api/v1/tasks")) {
+            return "TASK";
+        }
+        return null;
     }
 
     private static boolean isPathWithin(String path, String root) {
