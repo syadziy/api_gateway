@@ -28,6 +28,35 @@ resilience, dan observability. PostgreSQL/business state bukan tanggung jawab ga
 - Gunakan ECS structured fields, route ID, normalized contract, trace ID, outcome, dan duration.
 - Management port tidak boleh diekspos melalui public Service/Ingress.
 
+## Audit event contract
+
+- `SecurityConfig` adalah source of truth endpoint-to-permission. Setiap penambahan atau perubahan
+  `pathMatchers(...).hasAuthority("SCOPE_<permission>")` wajib diikuti mapping yang sama pada
+  `AuditEventFilter.requiredPermission(...)` dan test untuk action auditnya.
+- Untuk endpoint terproteksi, field `action` harus berasal dari permission yang diminta, bukan dari
+  route ID dan HTTP method. Ubah permission menjadi uppercase snake case; contoh
+  `alert.read-recipients` menjadi `ALERT_READ_RECIPIENTS`, `tenant.update` menjadi
+  `TENANT_UPDATE`, dan `scheduler.manage` menjadi `SCHEDULER_MANAGE`.
+- Pertahankan action endpoint publik yang spesifik: `POST /api/v1/auth/login` menggunakan
+  `AUTH_LOGIN` dan `POST /api/v1/tenants` menggunakan `TENANT_REGISTER`. Endpoint tanpa mapping
+  permission atau action khusus boleh menggunakan fallback `<ROUTE_ID>_<OPERATION>`.
+- Metadata audit endpoint terproteksi wajib berisi `requiredPermission` tanpa prefix `SCOPE_`.
+  Metadata juga mempertahankan `httpMethod`, normalized `httpPath`, `httpStatus`, `routeId`, dan
+  `tenantId` jika tersedia. Jangan menghapus field ini tanpa migrasi kontrak producer/consumer/UI.
+- `httpPath` harus membedakan endpoint yang benar-benar diakses, termasuk recipient configuration
+  dan delivery history, tetapi UUID serta numeric identifier harus tetap dinormalisasi menjadi
+  `{id}`.
+- Actor request authenticated diambil dari JWT `username`, lalu principal/subject sebagai fallback.
+  Actor login diambil dari field `username` request body yang sudah ditangkap dan disanitasi;
+  jangan mencatat password atau menjadikan login valid sebagai `anonymous`/`unknown-user`.
+- `resourceType` audit tetap merepresentasikan service/route ID sehingga consumer dan frontend dapat
+  menampilkannya sebagai kolom Service. Jangan mengganti maknanya dengan permission atau endpoint.
+- Audit record bersifat immutable. Perubahan kontrak hanya berlaku untuk event baru dan tidak boleh
+  menulis ulang histori tanpa migrasi eksplisit.
+- Perubahan resolver actor, permission, action, endpoint normalization, atau metadata wajib menambah
+  atau memperbarui `AuditEventFilterTest` untuk skenario authenticated, anonymous/denied, login,
+  dan endpoint yang memiliki permission serupa tetapi tujuan berbeda.
+
 ## Resilience
 
 - Retry hanya method idempotent dan tetap berada dalam total request deadline.

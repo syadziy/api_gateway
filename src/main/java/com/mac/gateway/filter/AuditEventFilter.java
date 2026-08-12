@@ -5,6 +5,7 @@ import com.mac.gateway.entities.dto.AuditEvent;
 import com.mac.gateway.service.AuditEventPublisher;
 import java.net.InetSocketAddress;
 import java.time.Clock;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -58,25 +59,32 @@ public class AuditEventFilter implements GlobalFilter, Ordered {
         Route route = exchange.getAttribute(ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR);
         String routeId = route == null ? "unmatched" : route.getId();
         String normalizedPath = normalizePath(exchange.getRequest().getPath().value());
-        String method = exchange.getRequest().getMethod().name();
-        Map<String, Object> metadata = actor.tenantId() == null
-                ? Map.of("httpMethod", method, "httpPath", normalizedPath,
-                        "httpStatus", statusCode, "routeId", routeId)
-                : Map.of("httpMethod", method, "httpPath", normalizedPath,
-                        "httpStatus", statusCode, "routeId", routeId, "tenantId", actor.tenantId());
+        HttpMethod httpMethod = exchange.getRequest().getMethod();
+        String permission = requiredPermission(httpMethod, normalizedPath);
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        metadata.put("httpMethod", httpMethod.name());
+        metadata.put("httpPath", normalizedPath);
+        metadata.put("httpStatus", statusCode);
+        metadata.put("routeId", routeId);
+        if (permission != null) {
+            metadata.put("requiredPermission", permission);
+        }
+        if (actor.tenantId() != null) {
+            metadata.put("tenantId", actor.tenantId());
+        }
         publisher.publish(new AuditEvent(
                 eventId,
                 properties.audit().sourceSystem(),
                 clock.instant(),
                 actor.username(),
                 actor.username(),
-                action(routeId, exchange.getRequest().getMethod(), normalizedPath),
+                action(routeId, httpMethod, normalizedPath),
                 routeId.toUpperCase(Locale.ROOT),
                 null,
                 statusCode < 400 ? "SUCCESS" : statusCode == 401 || statusCode == 403 ? "DENIED" : "FAILURE",
                 traceId,
                 clientIp(exchange),
-                metadata));
+                Map.copyOf(metadata)));
     }
 
     static String normalizePath(String path) {
@@ -92,6 +100,13 @@ public class AuditEventFilter implements GlobalFilter, Ordered {
         if (method == HttpMethod.POST && "/api/v1/auth/login".equals(path)) {
             return "AUTH_LOGIN";
         }
+        if (method == HttpMethod.POST && "/api/v1/tenants".equals(path)) {
+            return "TENANT_REGISTER";
+        }
+        String permission = requiredPermission(method, path);
+        if (permission != null) {
+            return permission.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]+", "_");
+        }
         String operation = switch (method.name()) {
             case "GET", "HEAD" -> "READ";
             case "POST" -> "CREATE";
@@ -100,6 +115,81 @@ public class AuditEventFilter implements GlobalFilter, Ordered {
             default -> method.name();
         };
         return routeId.toUpperCase(Locale.ROOT).replace('-', '_') + "_" + operation;
+    }
+
+    static String requiredPermission(HttpMethod method, String path) {
+        if (method == null || path == null) {
+            return null;
+        }
+        if (method == HttpMethod.GET || method == HttpMethod.HEAD) {
+            if ("/api/v1/tenants".equals(path)) {
+                return "tenant.view";
+            }
+            if (path.matches("/api/v1/tenants/[^/]+/users")) {
+                return "user.view";
+            }
+            if (path.matches("/api/v1/tenants/[^/]+/roles")) {
+                return "role.view";
+            }
+            if (path.matches("/api/v1/tenants/[^/]+/permissions")) {
+                return "permission.view";
+            }
+            if (isPathWithin(path, "/api/v1/alert/recipients")) {
+                return "alert.read-recipients";
+            }
+            if (isPathWithin(path, "/api/v1/alert/delivery-history")) {
+                return "alert.read-notifications";
+            }
+            if (isPathWithin(path, "/api/v1/audit-logs")
+                    || isPathWithin(path, "/api/v1/gateway-logs")) {
+                return "audit.read";
+            }
+            if (isPathWithin(path, "/api/v1/histories") || isSchedulerPath(path)) {
+                return "scheduler.read";
+            }
+        }
+        if (method == HttpMethod.PATCH
+                && path.matches("/api/v1/tenants/[^/]+/token-policy")) {
+            return "tenant.update";
+        }
+        if (method == HttpMethod.POST && path.matches("/api/v1/tenants/[^/]+/users")) {
+            return "user.create";
+        }
+        if (method == HttpMethod.PUT
+                && path.matches("/api/v1/tenants/[^/]+/users/[^/]+/roles")) {
+            return "role.assign";
+        }
+        if (method == HttpMethod.POST && path.matches("/api/v1/tenants/[^/]+/roles")) {
+            return "role.create";
+        }
+        if (method == HttpMethod.PUT
+                && path.matches("/api/v1/tenants/[^/]+/roles/[^/]+/permissions")) {
+            return "role.edit";
+        }
+        if (method == HttpMethod.POST && path.matches("/api/v1/tenants/[^/]+/permissions")) {
+            return "permission.create";
+        }
+        if ((method == HttpMethod.POST || method == HttpMethod.PUT || method == HttpMethod.DELETE)
+                && isPathWithin(path, "/api/v1/alert/recipients")) {
+            return "alert.manage-recipients";
+        }
+        if (method == HttpMethod.POST && isPathWithin(path, "/api/v1/alert")) {
+            return "alert.write";
+        }
+        if (method == HttpMethod.POST && isSchedulerPath(path)) {
+            return "scheduler.manage";
+        }
+        return null;
+    }
+
+    private static boolean isSchedulerPath(String path) {
+        return isPathWithin(path, "/api/v1/tasks")
+                || isPathWithin(path, "/api/v1/task-groups")
+                || isPathWithin(path, "/api/v1/schedules");
+    }
+
+    private static boolean isPathWithin(String path, String root) {
+        return path.equals(root) || path.startsWith(root + "/");
     }
 
     private static boolean isWebSocket(ServerWebExchange exchange) {

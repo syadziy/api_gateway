@@ -96,10 +96,11 @@ class AuditEventFilterTest {
         assertThat(event.getValue()).satisfies(value -> {
             assertThat(value.actorId()).isEqualTo("owner");
             assertThat(value.actorName()).isEqualTo("owner");
-            assertThat(value.action()).isEqualTo("USERMANAGEMENT_UPDATE");
+            assertThat(value.action()).isEqualTo("TENANT_UPDATE");
             assertThat(value.outcome()).isEqualTo("SUCCESS");
             assertThat(value.traceId()).isEqualTo("trace-1");
             assertThat(value.metadata()).containsEntry("tenantId", tenantId.toString())
+                    .containsEntry("requiredPermission", "tenant.update")
                     .containsEntry("httpPath", "/api/v1/tenants/{id}/token-policy");
         });
     }
@@ -138,9 +139,11 @@ class AuditEventFilterTest {
         ArgumentCaptor<AuditEvent> event = ArgumentCaptor.forClass(AuditEvent.class);
         verify(publisher).publish(event.capture());
         assertThat(event.getValue().actorId()).isEqualTo("unknown-user");
-        assertThat(event.getValue().action()).isEqualTo("UNMATCHED_READ");
+        assertThat(event.getValue().action()).isEqualTo("SCHEDULER_READ");
         assertThat(event.getValue().outcome()).isEqualTo("DENIED");
-        assertThat(event.getValue().metadata()).containsEntry("httpPath", "/api/v1/tasks/{id}");
+        assertThat(event.getValue().metadata())
+                .containsEntry("httpPath", "/api/v1/tasks/{id}")
+                .containsEntry("requiredPermission", "scheduler.read");
         assertThat(filter.getOrder()).isEqualTo(-140);
     }
 
@@ -176,6 +179,24 @@ class AuditEventFilterTest {
                 event.action().equals("AUTH_LOGIN")
                         && event.actorId().equals("login.owner")
                         && event.actorName().equals("login.owner")));
+    }
+
+    @Test
+    void derivesSpecificActionsFromEndpointPermissions() {
+        assertThat(AuditEventFilter.action("centralized-alert", org.springframework.http.HttpMethod.GET,
+                "/api/v1/alert/recipients")).isEqualTo("ALERT_READ_RECIPIENTS");
+        assertThat(AuditEventFilter.action("centralized-alert", org.springframework.http.HttpMethod.GET,
+                "/api/v1/alert/delivery-history")).isEqualTo("ALERT_READ_NOTIFICATIONS");
+        assertThat(AuditEventFilter.action("centralized-alert", org.springframework.http.HttpMethod.POST,
+                "/api/v1/alert/recipients")).isEqualTo("ALERT_MANAGE_RECIPIENTS");
+        assertThat(AuditEventFilter.action("scheduler", org.springframework.http.HttpMethod.GET,
+                "/api/v1/tasks")).isEqualTo("SCHEDULER_READ");
+        assertThat(AuditEventFilter.action("scheduler", org.springframework.http.HttpMethod.POST,
+                "/api/v1/schedules")).isEqualTo("SCHEDULER_MANAGE");
+        assertThat(AuditEventFilter.action("audit-log", org.springframework.http.HttpMethod.GET,
+                "/api/v1/gateway-logs")).isEqualTo("AUDIT_READ");
+        assertThat(AuditEventFilter.requiredPermission(org.springframework.http.HttpMethod.PUT,
+                "/api/v1/tenants/acme/users/user-1/roles")).isEqualTo("role.assign");
     }
 
     private static Route route(String id) {
