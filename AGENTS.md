@@ -30,6 +30,8 @@ resilience, dan observability. PostgreSQL/business state bukan tanggung jawab ga
 - Browser JWT diterima dari cookie `ACCESS_TOKEN` yang `HttpOnly`; Bearer header tetap menjadi
   prioritas untuk Postman/service clients. Gateway wajib memvalidasi keduanya dengan policy JWT yang
   sama dan me-relay cookie sebagai Bearer header ke downstream tanpa mengekspos token ke frontend.
+  Setelah relay, hapus hanya cookie autentikasi dari request downstream agar JWT tidak terkirim dua
+  kali dan memicu HTTP 431; cookie non-auth harus tetap dipertahankan.
 - Pertahankan `GET /api/v1/auth/session` sebagai authenticated route dan
   `POST /api/v1/auth/logout` sebagai public route yang hanya menghapus cookie. Actor resolver harus
   dapat mengambil actor dari principal, Bearer header, atau cookie agar profile lokal tidak kembali

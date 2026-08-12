@@ -38,10 +38,11 @@ class CookieAuthenticationTest {
     }
 
     @Test
-    void relaysCookieAsBearerHeaderForDownstreamServices() {
+    void relaysCookieAsBearerHeaderWithoutDuplicatingTokenDownstream() {
         CookieTokenRelayFilter filter = new CookieTokenRelayFilter(properties());
         var exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/api/v1/tasks")
-                .cookie(ResponseCookie.from("ACCESS_TOKEN", "cookie-token").build()));
+                .cookie(ResponseCookie.from("ACCESS_TOKEN", "cookie-token").build())
+                .cookie(ResponseCookie.from("theme", "dark").build()));
         AtomicReference<ServerWebExchange> forwarded = new AtomicReference<>();
 
         filter.filter(exchange, current -> {
@@ -51,6 +52,27 @@ class CookieAuthenticationTest {
 
         assertThat(forwarded.get().getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION))
                 .isEqualTo("Bearer cookie-token");
+        assertThat(forwarded.get().getRequest().getHeaders().getFirst(HttpHeaders.COOKIE))
+                .isEqualTo("theme=dark")
+                .doesNotContain("ACCESS_TOKEN", "cookie-token");
         assertThat(filter.getOrder()).isEqualTo(-90);
+    }
+
+    @Test
+    void preservesExplicitBearerHeaderWhileRemovingAuthCookie() {
+        CookieTokenRelayFilter filter = new CookieTokenRelayFilter(properties());
+        var exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/api/v1/tasks")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer header-token")
+                .cookie(ResponseCookie.from("ACCESS_TOKEN", "cookie-token").build()));
+        AtomicReference<ServerWebExchange> forwarded = new AtomicReference<>();
+
+        filter.filter(exchange, current -> {
+            forwarded.set(current);
+            return Mono.empty();
+        }).block();
+
+        assertThat(forwarded.get().getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION))
+                .isEqualTo("Bearer header-token");
+        assertThat(forwarded.get().getRequest().getHeaders().getFirst(HttpHeaders.COOKIE)).isNull();
     }
 }

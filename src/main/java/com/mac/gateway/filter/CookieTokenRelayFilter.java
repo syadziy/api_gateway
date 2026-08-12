@@ -1,6 +1,7 @@
 package com.mac.gateway.filter;
 
 import com.mac.gateway.config.properties.GatewayProperties;
+import java.util.stream.Collectors;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -20,15 +21,25 @@ public class CookieTokenRelayFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        if (exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION) != null) {
-            return chain.filter(exchange);
-        }
         var cookie = exchange.getRequest().getCookies().getFirst(properties.security().authCookieName());
         if (cookie == null || cookie.getValue().isBlank()) {
             return chain.filter(exchange);
         }
         var request = exchange.getRequest().mutate()
-                .headers(headers -> headers.setBearerAuth(cookie.getValue()))
+                .headers(headers -> {
+                    if (headers.getFirst(HttpHeaders.AUTHORIZATION) == null) {
+                        headers.setBearerAuth(cookie.getValue());
+                    }
+                    headers.remove(HttpHeaders.COOKIE);
+                    String remainingCookies = exchange.getRequest().getCookies().values().stream()
+                            .flatMap(java.util.Collection::stream)
+                            .filter(item -> !properties.security().authCookieName().equals(item.getName()))
+                            .map(item -> item.getName() + "=" + item.getValue())
+                            .collect(Collectors.joining("; "));
+                    if (!remainingCookies.isBlank()) {
+                        headers.set(HttpHeaders.COOKIE, remainingCookies);
+                    }
+                })
                 .build();
         return chain.filter(exchange.mutate().request(request).build());
     }
