@@ -2,6 +2,7 @@ package com.mac.gateway.config;
 
 import com.mac.gateway.config.properties.GatewayProperties;
 import com.mac.gateway.security.AudienceValidator;
+import com.mac.gateway.security.CookieBearerTokenConverter;
 import com.mac.gateway.utils.handler.ReactiveErrorWriter;
 import java.util.List;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -33,13 +34,16 @@ public class SecurityConfig {
     @ConditionalOnProperty(name = "gateway.security.enabled", havingValue = "true", matchIfMissing = true)
     SecurityWebFilterChain productionSecurity(
             ServerHttpSecurity http,
-            ReactiveErrorWriter errorWriter) {
+            ReactiveErrorWriter errorWriter,
+            GatewayProperties properties) {
         return common(http)
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .pathMatchers("/ws/alerts").permitAll()
                         .pathMatchers("/internal/**").permitAll()
                         .pathMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
+                        .pathMatchers(HttpMethod.POST, "/api/v1/auth/logout").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/api/v1/auth/session").authenticated()
                         .pathMatchers(HttpMethod.POST, "/api/v1/tenants").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/v1/tenants")
                             .hasAuthority("SCOPE_tenant.view")
@@ -89,6 +93,8 @@ public class SecurityConfig {
                         .accessDeniedHandler((exchange, exception) -> errorWriter.write(
                                 exchange, HttpStatus.FORBIDDEN, "GATEWAY_FORBIDDEN", "Access is denied")))
                 .oauth2ResourceServer(resourceServer -> resourceServer
+                        .bearerTokenConverter(new CookieBearerTokenConverter(
+                                properties.security().authCookieName()))
                         .jwt(Customizer.withDefaults())
                         .authenticationEntryPoint((exchange, exception) -> errorWriter.write(
                                 exchange, HttpStatus.UNAUTHORIZED, "GATEWAY_UNAUTHORIZED",

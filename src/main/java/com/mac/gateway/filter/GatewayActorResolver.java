@@ -54,6 +54,10 @@ public final class GatewayActorResolver {
         }
 
         String bearerToken = bearerToken(exchange.getRequest().getHeaders());
+        if (bearerToken == null) {
+            var cookie = exchange.getRequest().getCookies().getFirst(properties.security().authCookieName());
+            bearerToken = cookie == null || cookie.getValue().isBlank() ? null : cookie.getValue();
+        }
         if (bearerToken != null) {
             Actor decoded = decodeJwtClaims(bearerToken, properties.audit().fallbackActorId());
             if (decoded != null) {

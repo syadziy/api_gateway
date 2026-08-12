@@ -27,6 +27,13 @@ resilience, dan observability. PostgreSQL/business state bukan tanggung jawab ga
 - Jangan log token, cookie, API key, raw path dengan identifier, atau request/response body.
 - Gunakan ECS structured fields, route ID, normalized contract, trace ID, outcome, dan duration.
 - Management port tidak boleh diekspos melalui public Service/Ingress.
+- Browser JWT diterima dari cookie `ACCESS_TOKEN` yang `HttpOnly`; Bearer header tetap menjadi
+  prioritas untuk Postman/service clients. Gateway wajib memvalidasi keduanya dengan policy JWT yang
+  sama dan me-relay cookie sebagai Bearer header ke downstream tanpa mengekspos token ke frontend.
+- Pertahankan `GET /api/v1/auth/session` sebagai authenticated route dan
+  `POST /api/v1/auth/logout` sebagai public route yang hanya menghapus cookie. Actor resolver harus
+  dapat mengambil actor dari principal, Bearer header, atau cookie agar profile lokal tidak kembali
+  mencatat actor `unknown-user`.
 
 ## Audit event contract
 

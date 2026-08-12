@@ -100,6 +100,13 @@ public class AuditEventFilter implements GlobalFilter, Ordered {
         if (method == HttpMethod.POST && "/api/v1/auth/login".equals(path)) {
             return "AUTH_LOGIN";
         }
+        if (method == HttpMethod.POST && "/api/v1/auth/logout".equals(path)) {
+            return "AUTH_LOGOUT";
+        }
+        if ((method == HttpMethod.GET || method == HttpMethod.HEAD)
+                && "/api/v1/auth/session".equals(path)) {
+            return "AUTH_SESSION_READ";
+        }
         if (method == HttpMethod.POST && "/api/v1/tenants".equals(path)) {
             return "TENANT_REGISTER";
         }

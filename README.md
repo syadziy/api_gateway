@@ -84,7 +84,9 @@ Issuer utama adalah `usermanagement`. Gateway mengambil public RSA key melalui d
 memvalidasi audience `api-gateway`, dan memakai claim `scope` yang dibentuk dari permission
 `resource:action` menjadi `SCOPE_resource.action`.
 
-`POST /api/v1/auth/login` dan `POST /api/v1/tenants` dapat melewati gateway tanpa bearer token.
+`POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, dan `POST /api/v1/tenants` dapat melewati
+gateway tanpa bearer token. `GET /api/v1/auth/session` membutuhkan JWT valid. Browser mengirim JWT
+melalui cookie `ACCESS_TOKEN` yang `HttpOnly`; header Bearer tetap didukung untuk non-browser client.
 Kebijakan apakah registrasi tenant diizinkan tetap diputuskan oleh property
 `usermanagement.registration.enabled` pada downstream. Endpoint tenant lainnya membutuhkan scope
 yang sama dengan permission method-security usermanagement, misalnya `user:view` menjadi

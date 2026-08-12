@@ -68,6 +68,7 @@ gateway:
     enabled: ${GATEWAY_SECURITY_ENABLED:true}
     issuer-uri: ${JWT_ISSUER_URI:http://localhost:9005}
     audience: ${JWT_AUDIENCE:api-gateway}
+    auth-cookie-name: ${AUTH_COOKIE_NAME:ACCESS_TOKEN}
     allowed-origins: ${GATEWAY_ALLOWED_ORIGINS:http://localhost:5173}
     allow-credentials: ${GATEWAY_CORS_ALLOW_CREDENTIALS:true}
   audit:

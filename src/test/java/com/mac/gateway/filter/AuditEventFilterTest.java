@@ -185,6 +185,10 @@ class AuditEventFilterTest {
     void derivesSpecificActionsFromEndpointPermissions() {
         assertThat(AuditEventFilter.action("centralized-alert", org.springframework.http.HttpMethod.GET,
                 "/api/v1/alert/recipients")).isEqualTo("ALERT_READ_RECIPIENTS");
+        assertThat(AuditEventFilter.action("usermanagement", org.springframework.http.HttpMethod.GET,
+                "/api/v1/auth/session")).isEqualTo("AUTH_SESSION_READ");
+        assertThat(AuditEventFilter.action("usermanagement", org.springframework.http.HttpMethod.POST,
+                "/api/v1/auth/logout")).isEqualTo("AUTH_LOGOUT");
         assertThat(AuditEventFilter.action("centralized-alert", org.springframework.http.HttpMethod.GET,
                 "/api/v1/alert/delivery-history")).isEqualTo("ALERT_READ_NOTIFICATIONS");
         assertThat(AuditEventFilter.action("centralized-alert", org.springframework.http.HttpMethod.POST,

@@ -20,7 +20,7 @@ public final class TestFixtures {
                 ZoneId.of("UTC"),
                 new GatewayProperties.Http("X-Correlation-Id", "X-Client-Id", 64,
                         DataSize.ofMegabytes(5), Duration.ofSeconds(2), Duration.ofSeconds(10)),
-                new GatewayProperties.Security(false, "https://issuer.example", "gateway",
+                new GatewayProperties.Security(false, "https://issuer.example", "gateway", "ACCESS_TOKEN",
                         List.of("https://app.example"), true),
                 new GatewayProperties.Audit(auditEnabled, "centralized-audit.requested", "API-GATEWAY", "unknown-user"),
                 new GatewayProperties.CentralizedLog(

@@ -39,6 +39,7 @@ public record GatewayProperties(
             @DefaultValue("true") boolean enabled,
             @DefaultValue("http://localhost:9005") @NotBlank String issuerUri,
             @DefaultValue("api-gateway") @NotBlank String audience,
+            @DefaultValue("ACCESS_TOKEN") @NotBlank String authCookieName,
             @DefaultValue("https://app.example.com") List<String> allowedOrigins,
             @DefaultValue("true") boolean allowCredentials) {
 

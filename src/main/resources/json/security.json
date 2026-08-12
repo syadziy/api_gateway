@@ -8,6 +8,8 @@
   "scopeMapping": {
     "/internal/**": "public-internal-network-only",
     "POST /api/v1/auth/login": "public",
+    "POST /api/v1/auth/logout": "public-cookie-clear",
+    "GET /api/v1/auth/session": "authenticated",
     "POST /api/v1/tenants": "public",
     "GET /api/v1/tenants": "tenant.view",
     "PATCH /api/v1/tenants/*/token-policy": "tenant.update",
